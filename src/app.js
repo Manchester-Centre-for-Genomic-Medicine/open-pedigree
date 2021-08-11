@@ -13,5 +13,7 @@ import '../public/vendor/phenotips/Skin.css';
 var editor;
 
 document.observe('dom:loaded',function() {
-  editor = new PedigreeEditor();
+  editor = new PedigreeEditor({
+    enabledTabs: ['Personal']
+  });
 });

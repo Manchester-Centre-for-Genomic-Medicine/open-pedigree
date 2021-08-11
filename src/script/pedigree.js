@@ -33,9 +33,13 @@ var PedigreeEditor = Class.create({
 
     // URL to load patient data from and save data to
     var patientDataUrl = options.patientDataUrl || '';
+    
     // URL to redirect the browser to on cancel/close
     var returnUrl = options.returnUrl || 'https://github.com/phenotips/open-pedigree';
     this.DEBUG_MODE = Boolean(options.DEBUG_MODE);
+
+    // Tabs to enable/disable
+    this.enabledTabs = options.enabledTabs || ['Personal', 'Clinical'];
 
     window.editor = this;
 
@@ -322,6 +326,7 @@ var PedigreeEditor = Class.create({
       return null;
     }
     var _this = this;
+
     return new NodeMenu([
       {
         'name' : 'identifier',
@@ -492,7 +497,9 @@ var PedigreeEditor = Class.create({
         'rows' : 2,
         'function' : 'setComments'
       }
-    ], ['Personal', 'Clinical']);
+    ].filter((item) => {
+      return this.enabledTabs.indexOf(item.tab) !== -1
+    }), this.enabledTabs)
   },
 
   /**
