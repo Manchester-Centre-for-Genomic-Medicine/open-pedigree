@@ -14,6 +14,8 @@ var editor;
 
 document.observe('dom:loaded',function() {
   editor = new PedigreeEditor({
-    tabs: ['Personal']
+    //patientDataUrl: '',
+    //returnUrl: 'https://github.com/phenotips/open-pedigree',
+    //tabs: ['Personal', 'Clinical'],
   });
 });
