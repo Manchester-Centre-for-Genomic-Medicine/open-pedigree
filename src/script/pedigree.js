@@ -39,7 +39,7 @@ var PedigreeEditor = Class.create({
     this.DEBUG_MODE = Boolean(options.DEBUG_MODE);
 
     // Tabs to enable/disable
-    this.enabledTabs = options.enabledTabs || ['Personal', 'Clinical'];
+    this.tabs = options.tabs || ['Personal', 'Clinical'];
 
     window.editor = this;
 
@@ -498,8 +498,8 @@ var PedigreeEditor = Class.create({
         'function' : 'setComments'
       }
     ].filter((item) => {
-      return this.enabledTabs.indexOf(item.tab) !== -1
-    }), this.enabledTabs)
+      return this.tabs.indexOf(item.tab) !== -1
+    }), this.tabs)
   },
 
   /**

@@ -14,6 +14,6 @@ var editor;
 
 document.observe('dom:loaded',function() {
   editor = new PedigreeEditor({
-    enabledTabs: ['Personal']
+    tabs: ['Personal']
   });
 });
