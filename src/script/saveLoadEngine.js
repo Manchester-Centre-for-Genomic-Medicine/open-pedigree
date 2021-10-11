@@ -1,5 +1,4 @@
 import TemplateSelector from 'pedigree/view/templateSelector';
-import escapeStringRegexp from 'escape-string-regexp';
 
 /**
  * SaveLoadEngine is responsible for automatic and manual save and load operations.
@@ -35,58 +34,6 @@ function getSelectorFromXML(responseXML, selectorName, attributeName, attributeV
   }
 }
 
-/**
- * Escapes a string for use in a regular expression.  Taken from MDN:
- * 
- * https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions#escaping
- * 
- * @param {String} string 
- * @returns 
- */
-function escapeRegExp(string) {
-  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
-}
-
-/**
- * Uses native browser functionalty to encode HTML entities within a string.
- * 
- * @param {String} string 
- * @returns 
- */
-function encodeHTMLEntities(string) {
-  let el = document.createElement('div');
-  el.textContent = string;
-  return el.innerHTML;
-}
-
-/**
- * Converts a URI into a value which can be used in a regular expression
- * 
- * @param {String} uri 
- * @returns 
- */
-function uriAsRegex(uri) {
-  return escapeRegExp(
-    encodeHTMLEntities(uri)
-  );
-}
-
-/**
- * Process the Canvas element to return SVG data.
- * 
- * @param {DOMElement} element 
- */
-function canvasToSvg(element) {
-  var bbox = element.down().getBBox();
-
-  return element.innerHTML
-    .replace(/xmlns:xlink=".*?"/, '')
-    .replace(/width=".*?"/, '')
-    .replace(/height=".*?"/, '')
-    .replace(/viewBox=".*?"/, 'viewBox="' + bbox.x + ' ' + bbox.y + ' ' + bbox.width + ' ' + bbox.height + '" width="' + bbox.width + '" height="' + bbox.height + '" xmlns:xlink="http://www.w3.org/1999/xlink"')
-    .replaceAll(new RegExp(uriAsRegex(window.location.href), 'g'), '');
-}
-
 function getSubSelectorTextFromXML(responseXML, selectorName, attributeName, attributeValue, subselectorName) {
   var selector = getSelectorFromXML(responseXML, selectorName, attributeName, attributeValue);
 
@@ -101,63 +48,8 @@ function getSubSelectorTextFromXML(responseXML, selectorName, attributeName, att
 }
 
 var SaveLoadEngine = Class.create( {
-  _defaultSaveFunction: function(args) {
-    var me = this;
 
-    new Ajax.Request(patientDataUrl, {
-      method: 'POST',
-      onCreate: function() {
-        args.setSaveInProgress(true);
-      },
-      onComplete: function() {
-        args.setSaveInProgress(false);
-        me._saveInProgress = false;
-      },
-      onSuccess: function() {},
-      parameters: {'property#data': args.jsonData, 'property#image': args.svgData }
-    });
-  },
-
-  _defaultLoadFunction: function(args) {
-    var _this = this;
-    var didLoadData = false;
-
-    new Ajax.Request(args.patientDataUrl, {
-      method: 'GET',
-      onCreate: function() {
-        document.fire('pedigree:load:start');
-      },
-      onSuccess: function(response) {
-        //console.log("Data from LOAD: " + JSON.stringify(response));
-        //console.log("[Data from LOAD]");
-        if (response && response.responseXML) {
-          var rawdata  = getSubSelectorTextFromXML(response.responseXML, 'property', 'name', 'data', 'value');
-          var jsonData = unescapeRestData(rawdata);
-          if (jsonData.trim()) {
-            console.log('[LOAD] recived JSON: ' + JSON.stringify(jsonData));
-
-            args.onSuccess(jsonData);
-
-            jsonData = editor.getVersionUpdater().updateToCurrentVersion(jsonData);
-
-            didLoadData = true;
-          }
-        }
-      },
-      onComplete: function() {
-        if (!didLoadData) {
-          // If load failed, just open templates
-          new TemplateSelector(true);
-        }
-      }
-    });
-  },
-
-  initialize: function(options) {
-    this._saveFunction = options.save || this._defaultSaveFunction;
-    this._loadFunction = options.load || this._defaultLoadFunction;
-    this._customBackend = (this._saveFunction.toString() !== this._defaultSaveFunction.toString())
-      && (this._loadFunction.toString() !== this._defaultLoadFunction.toString());
+  initialize: function() {
     this._saveInProgress = false;
   },
 
@@ -171,7 +63,7 @@ var SaveLoadEngine = Class.create( {
   },
 
   createGraphFromSerializedData: function(JSONString, noUndo, centerAround0) {
-    console.log('---- load: parsing data ----', JSONString);
+    console.log('---- load: parsing data ----');
     document.fire('pedigree:load:start');
 
     try {
@@ -233,14 +125,12 @@ var SaveLoadEngine = Class.create( {
     document.fire('pedigree:load:finish');
   },
 
-  setSaveInProgress: function(status) {
-    this._saveInProgress = status;
-  },
-
   save: function(patientDataUrl) {
     if (this._saveInProgress) {
       return;
     }   // Don't send parallel save requests
+
+    var me = this;
 
     var jsonData = this.serialize();
 
@@ -251,30 +141,54 @@ var SaveLoadEngine = Class.create( {
     var backgroundPosition = background.nextSibling;
     var backgroundParent =  background.parentNode;
     backgroundParent.removeChild(background);
-    
-    this._saveFunction({
-      patientDataUrl: patientDataUrl,
-      jsonData: jsonData,
-      setSaveInProgress: this.setSaveInProgress,
-      svgData: canvasToSvg(image)
+    var bbox = image.down().getBBox();
+    new Ajax.Request(patientDataUrl, {
+      method: 'POST',
+      onCreate: function() {
+        me._saveInProgress = true;
+      },
+      onComplete: function() {
+        me._saveInProgress = false;
+      },
+      onSuccess: function() {},
+      parameters: {'property#data': jsonData, 'property#image': image.innerHTML.replace(/xmlns:xlink=".*?"/, '').replace(/width=".*?"/, '').replace(/height=".*?"/, '').replace(/viewBox=".*?"/, 'viewBox="' + bbox.x + ' ' + bbox.y + ' ' + bbox.width + ' ' + bbox.height + '" width="' + bbox.width + '" height="' + bbox.height + '" xmlns:xlink="http://www.w3.org/1999/xlink"')}
     });
     backgroundParent.insertBefore(background, backgroundPosition);
   },
 
-  _displayData: function(jsonData) {
-    // update the json to the current version, then load it in the current interface 
-    this.createGraphFromSerializedData(
-      editor.getVersionUpdater().updateToCurrentVersion(jsonData)
-    );
-  },
-
   load: function(patientDataUrl) {
     console.log('initiating load process');
-    if (patientDataUrl || this._customBackend) {
-      this._loadFunction({
-        patientDataUrl: patientDataUrl,
-        onSuccess: this._displayData.bind(this),
-        onFailure: () => { new TemplateSelector(true); }
+    var _this = this;
+    var didLoadData = false;
+    if (patientDataUrl) {
+      new Ajax.Request(patientDataUrl, {
+        method: 'GET',
+        onCreate: function() {
+          document.fire('pedigree:load:start');
+        },
+        onSuccess: function(response) {
+          //console.log("Data from LOAD: " + JSON.stringify(response));
+          //console.log("[Data from LOAD]");
+          if (response && response.responseXML) {
+            var rawdata  = getSubSelectorTextFromXML(response.responseXML, 'property', 'name', 'data', 'value');
+            var jsonData = unescapeRestData(rawdata);
+            if (jsonData.trim()) {
+              console.log('[LOAD] recived JSON: ' + JSON.stringify(jsonData));
+
+              jsonData = editor.getVersionUpdater().updateToCurrentVersion(jsonData);
+
+              _this.createGraphFromSerializedData(jsonData);
+
+              didLoadData = true;
+            }
+          }
+        },
+        onComplete: function() {
+          if (!didLoadData) {
+            // If load failed, just open templates
+            new TemplateSelector(true);
+          }
+        }
       });
     } else {
       new TemplateSelector(true);
