@@ -11,7 +11,7 @@
   "devServer": {
     "compress": true,
     "host": "0.0.0.0",
-    "disableHostCheck": true
+    "allowedHosts": "all"
   },
   "repository": {
     "type": "git",
