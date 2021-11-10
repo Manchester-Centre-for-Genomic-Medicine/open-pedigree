@@ -14,5 +14,5 @@ RUN npm install \
 COPY . .
 
 # run the application and make it available outside the container
-ENTRYPOINT [ "executable" ] ["npm", "run", "start-docker"]
+ENTRYPOINT ["npm", "run", "start-docker"]
 EXPOSE 9000
