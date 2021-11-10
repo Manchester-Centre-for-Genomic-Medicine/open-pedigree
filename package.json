@@ -6,7 +6,7 @@
   "scripts": {
     "build": "webpack -p",
     "start": "webpack-dev-server --mode=development --output-public-path=dist --watch",
-    "start-docker": "webpack-dev-server --mode=production --disable-host-check --output-public-path=dist --host=0.0.0.0"
+    "start-docker": "webpack-dev-server --mode=development --disable-host-check --output-public-path=dist --host=0.0.0.0"
   },
   "devServer": {
     "compress": true,
