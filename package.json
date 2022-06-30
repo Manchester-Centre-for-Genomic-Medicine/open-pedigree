@@ -7,7 +7,12 @@
     "build": "webpack -p",
     "test": "node_modules/.bin/eslint --quiet src/**/*.js",
     "start": "webpack-dev-server --mode=development --output-public-path=dist --watch",
-    "start-docker": "webpack-dev-server --mode=production --output-public-path=dist --host=0.0.0.0"
+    "start-docker": "webpack-dev-server --mode=development --disable-host-check --output-public-path=dist --host=0.0.0.0"
+  },
+  "devServer": {
+    "compress": true,
+    "host": "0.0.0.0",
+    "allowedHosts": "all"
   },
   "repository": {
     "type": "git",
@@ -23,12 +28,17 @@
     "url": "https://github.com/phenotips/open-pedigree/issues"
   },
   "homepage": "https://github.com/phenotips/open-pedigree#readme",
+  "dependencies": {
+    "@auth0/auth0-spa-js": "^1.19.2",
+    "babel-polyfill": "^6.26.0"
+  },
   "devDependencies": {
     "@babel/core": "^7.15.0",
     "@babel/preset-env": "^7.15.0",
     "@fortawesome/fontawesome-free": "^5.15.4",
     "babel-loader": "^8.2.2",
     "css-loader": "^3.6.0",
+    "dotenv-webpack": "^7.0.3",
     "eslint": "^5.0.0",
     "file-loader": "^1.1.11",
     "html-webpack-plugin": "^3.2.0",
