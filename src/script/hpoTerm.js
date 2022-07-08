@@ -84,7 +84,10 @@ HPOTerm.isValidID = function(id) {
 };
 
 HPOTerm.getServiceURL = function() {
-  return new XWiki.Document('SolrService', 'PhenoTips').getURL('get') + '?';
+  //return new XWiki.Document('SolrService', 'PhenoTips').getURL('get') + '?';
+  // This suggestion from the link doues not work, 
+  // but some valid link is needed to input HPO terms as free text.
+  return 'https://raw.githubusercontent.com/obophenotype/human-phenotype-ontology/master/hp.obo?'
 };
 
 export default HPOTerm;

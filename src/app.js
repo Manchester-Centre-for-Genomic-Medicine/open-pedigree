@@ -19,3 +19,16 @@ document.observe('dom:loaded',function() {
     //tabs: ['Personal', 'Clinical'],
   });
 });
+
+
+document.observe('pedigree:person:set:hpo', function(event) {
+  // Function to print Person external ID and HPO terms when the latter are updated.
+  console.log('Person HPO Terms were updated!')
+  console.log('Person external ID:', event.memo.node.getExternalID())
+  console.log('HPO Terms:')
+  var hpos = event.memo.value
+  for(var i = 0; i < hpos.length; i++) {
+    var hpo = hpos[i]
+    console.log(`${i}) ID: ${hpo.getID()}, Name: ${hpo.getName()}`);
+  }
+});
