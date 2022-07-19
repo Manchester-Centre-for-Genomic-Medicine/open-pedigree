@@ -562,8 +562,58 @@
 }
 
 /* ===========================================
+ * NODE MENU HPO TERM SELECTIZE.JS
+ */
+
+.selectize-control.suggest-hpo .selectize-dropdown > div {
+  border-bottom: 1px solid rgba(0,0,0,0.05);
+}
+
+.selectize-control.suggest-hpo .selectize-dropdown .title {
+  display: block;
+}
+
+.selectize-control.suggest-hpo .selectize-dropdown .ontologyId {
+  font-weight: bold;
+  margin-right: 5px;
+}
+
+.selectize-control.suggest-hpo .selectize-dropdown .name {
+  margin-right: 5px;
+}
+
+.selectize-control.suggest-hpo .selectize-dropdown .synonym {
+  font-style: italic;
+}
+
+/*
+// Not used because currently overlaps with selected HPO terms.
+.selectize-control.suggest-hpo::before {
+  -moz-transition: opacity 0.2s;
+  -webkit-transition: opacity 0.2s;
+  transition: opacity 0.2s;
+  content: ' ';
+  z-index: 2;
+  position: absolute;
+  display: block;
+  top: 12px;
+  right: 34px;
+  width: 16px;
+  height: 16px;
+  background: url(../assets/spinner.gif);
+  background-size: 16px 16px;
+  opacity: 0;
+}
+*/
+
+.selectize-control.suggest-hpo.loading::before {
+  opacity: 0.4;
+}
+
+/* ===========================================
  * NODE TYPE OPTIONS
  */
+
 .callout {
   position: absolute;
   width: auto;

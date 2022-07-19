@@ -27,6 +27,7 @@
     "@babel/core": "^7.15.0",
     "@babel/preset-env": "^7.15.0",
     "@fortawesome/fontawesome-free": "^5.15.4",
+    "@types/jquery": "^3.5.14",
     "babel-loader": "^8.2.2",
     "css-loader": "^3.6.0",
     "eslint": "^5.0.0",
@@ -40,5 +41,9 @@
     "webpack": "^4.46.0",
     "webpack-cli": "^3.3.12",
     "webpack-dev-server": "^3.11.2"
+  },
+  "dependencies": {
+    "@selectize/selectize": "^0.13.6",
+    "jquery": "^3.6.0"
   }
 }

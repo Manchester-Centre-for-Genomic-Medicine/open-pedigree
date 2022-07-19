@@ -10,6 +10,11 @@ import '../public/vendor/phenotips/Widgets.css';
 import '../public/vendor/phenotips/DateTimePicker.css';
 import '../public/vendor/phenotips/Skin.css';
 
+// For some reason this import doesn't work, so it is loaded in index.html.
+//import '../public/vendor/selectize/selectize.default.css';
+
+import HPOTerm from 'pedigree/hpoTerm';
+
 var editor;
 
 document.observe('dom:loaded',function() {
@@ -29,6 +34,6 @@ document.observe('pedigree:person:set:hpo', function(event) {
   var hpos = event.memo.value
   for(var i = 0; i < hpos.length; i++) {
     var hpo = hpos[i]
-    console.log(`${i}) ID: ${hpo.getID()}, Name: ${hpo.getName()}`);
+    console.log(`${i}) ID: ${HPOTerm.desanitizeID(hpo.getID())}, Name: ${hpo.getName()}`);
   }
 });
