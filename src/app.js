@@ -17,9 +17,20 @@ document.observe('dom:loaded', async function () {
   let auth0 = null;
   const configureAuth0 = async () => {
     auth0 = await new Auth0Client({
-      domain: "gen-o.eu.auth0.com",
-      client_id: "cMDwFfxF4hC1GOs6W35HdDSPmregh6A7",
-      audience: "https://gen-o.eu.auth0.com/api/v2/",
+    // LIVE
+    //domain: "gen-o.eu.auth0.com",
+    //client_id: "cMDwFfxF4hC1GOs6W35HdDSPmregh6A7",
+    //audience: "https://gen-o.eu.auth0.com/api/v2/",
+
+    // TEST
+    //domain: "gen-o-test.eu.auth0.com",
+    //client_id: "Kx350GeJFnWb1mYc5H3GjMvG8hrc2OYR",
+    //audience: "https://gen-o-test.eu.auth0.com/api/v2/",
+
+    // DEVELOP
+    domain: "gen-o-dev.eu.auth0.com",
+    client_id: "d3YJUQgU53bhu4O7nhPtFnXM4LjNUb6U",
+    audience: "https://gen-o-dev.eu.auth0.com/api/v2/",
     });
   };
 
@@ -44,7 +55,7 @@ document.observe('dom:loaded', async function () {
   const graphql = async (body) => {
     const token = await auth0.getTokenSilently();
 
-    const result = await fetch("https://graphql.northwestglh.com/v1/graphql", {
+    const result = await fetch("https://develop-graphql.northwestglh.com/v1/graphql", {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,

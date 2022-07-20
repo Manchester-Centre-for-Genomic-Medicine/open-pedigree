@@ -30,12 +30,15 @@
   "homepage": "https://github.com/phenotips/open-pedigree#readme",
   "dependencies": {
     "@auth0/auth0-spa-js": "^1.19.2",
-    "babel-polyfill": "^6.26.0"
+    "babel-polyfill": "^6.26.0",
+    "@selectize/selectize": "^0.13.6",
+    "jquery": "^3.6.0"
   },
   "devDependencies": {
     "@babel/core": "^7.15.0",
     "@babel/preset-env": "^7.15.0",
     "@fortawesome/fontawesome-free": "^5.15.4",
+    "@types/jquery": "^3.5.14",
     "babel-loader": "^8.2.2",
     "css-loader": "^3.6.0",
     "dotenv-webpack": "^7.0.3",
