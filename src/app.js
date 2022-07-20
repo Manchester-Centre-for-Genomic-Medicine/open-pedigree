@@ -1,4 +1,7 @@
+import  { Auth0Client } from "@auth0/auth0-spa-js";
+
 import PedigreeEditor from './script/pedigree';
+import "babel-polyfill";
 
 import '@fortawesome/fontawesome-free/js/fontawesome'
 import '@fortawesome/fontawesome-free/js/solid'
@@ -10,30 +13,167 @@ import '../public/vendor/phenotips/Widgets.css';
 import '../public/vendor/phenotips/DateTimePicker.css';
 import '../public/vendor/phenotips/Skin.css';
 
-// For some reason this import doesn't work, so it is loaded in index.html.
-//import '../public/vendor/selectize/selectize.default.css';
+document.observe('dom:loaded', async function () {
+  let auth0 = null;
+  const configureAuth0 = async () => {
+    auth0 = await new Auth0Client({
+    // LIVE
+    //domain: "gen-o.eu.auth0.com",
+    //client_id: "cMDwFfxF4hC1GOs6W35HdDSPmregh6A7",
+    //audience: "https://gen-o.eu.auth0.com/api/v2/",
 
-import HPOTerm from 'pedigree/hpoTerm';
+    // TEST
+    //domain: "gen-o-test.eu.auth0.com",
+    //client_id: "Kx350GeJFnWb1mYc5H3GjMvG8hrc2OYR",
+    //audience: "https://gen-o-test.eu.auth0.com/api/v2/",
 
-var editor;
+    // DEVELOP
+    domain: "gen-o-dev.eu.auth0.com",
+    client_id: "d3YJUQgU53bhu4O7nhPtFnXM4LjNUb6U",
+    audience: "https://gen-o-dev.eu.auth0.com/api/v2/",
+    });
+  };
 
-document.observe('dom:loaded',function() {
-  editor = new PedigreeEditor({
-    //patientDataUrl: '',
-    //returnUrl: 'https://github.com/phenotips/open-pedigree',
-    //tabs: ['Personal', 'Clinical'],
-  });
-});
+  await configureAuth0();
 
-
-document.observe('pedigree:person:set:hpo', function(event) {
-  // Function to print Person external ID and HPO terms when the latter are updated.
-  console.log('Person HPO Terms were updated!')
-  console.log('Person external ID:', event.memo.node.getExternalID())
-  console.log('HPO Terms:')
-  var hpos = event.memo.value
-  for(var i = 0; i < hpos.length; i++) {
-    var hpo = hpos[i]
-    console.log(`${i}) ID: ${HPOTerm.desanitizeID(hpo.getID())}, Name: ${hpo.getName()}`);
+  const authenticated = await auth0.isAuthenticated();
+  const login = async () => {
+    await auth0.loginWithRedirect({
+      redirect_uri: window.location.href
+    });
+  };
+  
+  if (!authenticated) {
+    const query = new URLSearchParams(window.location.search);
+    if (query.has('code') && query.has('state')) {
+      await auth0.handleRedirectCallback();
+    } else {
+      login();
+    }
   }
+
+  const graphql = async (body) => {
+    const token = await auth0.getTokenSilently();
+
+    const result = await fetch("https://develop-graphql.northwestglh.com/v1/graphql", {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: JSON.stringify(body)
+    }).then(r => r.json());
+
+    return result;
+  };
+    
+  const urlParams = new URLSearchParams(window.location.search);
+  
+  const editor = new PedigreeEditor({
+    returnUrl: 'javascript:history.go(-2)',
+    autosave: true,
+    backend: {
+      load: async ({ onSuccess, onError }) => {
+        if (urlParams.has('phenopacket_id')) {
+          const query = `
+            query GetOpenPedigreeData($phenopacketId: uuid!) {
+              family(where: {phenopacket_id: {_eq: $phenopacketId}}) {
+                id
+                rawData: raw_open_pedigree_data
+              }
+            }
+          `;
+          const variables = {
+            phenopacketId: urlParams.get('phenopacket_id')
+          };
+          const result = await graphql({
+            query,
+            variables
+          });
+
+          return onSuccess(
+            result?.data?.family[0]?.rawData?.jsonData ?? null
+          );
+        } else {
+          console.warn('No phenopacket ID has been specified. No data will be saved.')
+        }
+      },
+      save: async ({ jsonData, svgData, setSaveInProgress }) => {
+        //setSaveInProgress(true);
+        const query = `
+          mutation UpdateOpenPedigreeData(
+            $phenopacketId: uuid!,
+            $rawData: jsonb!
+          ) {
+            insert_family_one(
+              object: {
+                phenopacket_id: $phenopacketId,
+                raw_open_pedigree_data: $rawData
+              },
+              on_conflict: {
+                constraint: family_phenopacket_id_key,
+                update_columns: raw_open_pedigree_data
+              }
+            ) {
+              id
+            }
+          }
+        `;
+        const variables = {
+          phenopacketId: urlParams.get('phenopacket_id'),
+          rawData: {
+            svgData,
+            jsonData,
+          },
+        };
+        const result = await graphql({query, variables});
+        //setSaveInProgress(false);
+      },
+    } 
+  });
+
+  // hook externalid up to the gen-o database
+  document.observe('pedigree:person:set:externalid', async (event) => {
+    const query = `
+      query GetDemographics(
+        $primaryIdentifier: String!
+      ) {
+        individual(
+          where: {
+            primary_identifier: {_eq: $primaryIdentifier}
+          }
+        ) {
+          date_of_birth
+          date_of_death
+          deceased
+          first_name
+          last_name
+          primary_identifier
+          sex
+        }
+      }
+    `;
+    const variables = {
+      primaryIdentifier: event.memo.value,
+    };
+    const result = await graphql({ query, variables });
+    event.memo.node.setFirstName(
+      result.data?.individual[0]?.first_name
+    );
+    event.memo.node.setLastName(
+      result.data?.individual[0]?.last_name
+    );
+    event.memo.node.setLifeStatus(
+      result.data?.individual[0]?.deceased
+        ? 'deceased'
+        : 'alive'
+    );
+    event.memo.node.setBirthDate(
+      new Date(result.data?.individual[0]?.date_of_birth)
+    );
+    event.memo.node.setDeathDate(
+      new Date(result.data?.individual[0]?.date_of_death)
+    );
+  });
 });

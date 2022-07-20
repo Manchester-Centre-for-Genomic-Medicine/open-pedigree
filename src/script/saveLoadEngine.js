@@ -1,4 +1,5 @@
 import TemplateSelector from 'pedigree/view/templateSelector';
+import escapeStringRegexp from 'escape-string-regexp';
 
 /**
  * SaveLoadEngine is responsible for automatic and manual save and load operations.
