@@ -14,8 +14,15 @@ var HPOTerm = Class.create( {
       name = HPOTerm.desanitizeID(hpoID);
     }
 
-    this._hpoID  = HPOTerm.sanitizeID(hpoID);
-    this._name   = name ? name : 'loading...';
+    // Load hpo id and name from display name.
+    if (hpoID == null && name.includes(' | ')) {
+      var hpoInfo = name.split(' | ');
+      this._hpoID = HPOTerm.sanitizeID(hpoInfo[0]);
+      this._name  = hpoInfo[1];
+    } else {
+      this._hpoID  = HPOTerm.sanitizeID(hpoID);
+      this._name   = name ? name : 'loading...';
+    }
 
     if (!name && callWhenReady) {
       this.load(callWhenReady);
@@ -30,10 +37,24 @@ var HPOTerm = Class.create( {
   },
 
   /*
+    * Returns the desanitized hpoID of the phenotype
+    */
+  getdDesanitizedID: function() {
+    return HPOTerm.desanitizeID(this._hpoID);
+  },
+
+  /*
      * Returns the name of the term
      */
   getName: function() {
     return this._name;
+  },
+
+  /*
+     * Returns the display name of the term in format "hpoID | name"
+     */
+  getDisplayName: function() {
+    return HPOTerm.desanitizeID(this._hpoID) + ' | ' + this._name; //this._displayName;
   },
 
   load: function(callWhenReady) {
@@ -84,7 +105,10 @@ HPOTerm.isValidID = function(id) {
 };
 
 HPOTerm.getServiceURL = function() {
-  return new XWiki.Document('SolrService', 'PhenoTips').getURL('get') + '?';
+  //return new XWiki.Document('SolrService', 'PhenoTips').getURL('get') + '?';
+  // This suggestion from the link doues not work, 
+  // but some valid link is needed to input HPO terms as free text.
+  return 'https://raw.githubusercontent.com/obophenotype/human-phenotype-ontology/master/hp.obo?'
 };
 
 export default HPOTerm;

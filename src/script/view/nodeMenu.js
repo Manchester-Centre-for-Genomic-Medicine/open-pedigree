@@ -201,6 +201,56 @@ var NodeMenu = Class.create({
     // HPO terms
     this.form.select('input.suggest-hpo').each(function(item) {
       if (!item.hasClassName('initialized')) {
+        jQuery(item).selectize({
+          maxItems: null,
+          valueField: 'value',
+          searchField: ['name', 'synonym', 'ontologyId'],
+          options: [],
+          create: false,
+          maxOptions: 100,
+          render: {
+            item: function(item, escape) {
+              return '<div>' + escape(item.value) + '</div>';
+            },
+            option: function(item, escape) {
+              var div = '<div>' +
+                '<span class="title">' +
+                '<span class="ontologyId">' + escape(item.id) + '</span>' +
+                '<span class="name">' + escape(item.name) + '</span>';
+              if (item.synonym){
+                div += '<span class="synonym">(' + escape(item.synonym) + ')</span>'
+              }
+              div += '</span></div>';
+              return div;
+            },
+          },
+          load: function(query, callback) {
+            if (!query.length) return callback();
+            jQuery.ajax({
+              // Note that "max" url parameter sets the number of suggestions retireved form the HPO API (lower = less laggy).
+              url: 'https://hpo.jax.org/api/hpo/search/?q=' + encodeURIComponent(query) + '&max=25&offset=0&category=terms',
+              type: 'GET',
+              error: function() {
+                callback();
+              },
+              success: function(res) {
+                res.terms.each(function(item){
+                  var hpoTerm = new HPOTerm(item.id, item.name);
+                  item.value = hpoTerm.getDisplayName();
+                })
+                callback(res.terms);
+              }
+            });
+          },
+          onChange: function() {
+            this.fieldName = 'hpo_positive';
+            document.fire('custom:selectize:changed', this);
+          },
+          
+        });
+        
+        /*
+        // Code of the original Open Pedigree HPO selector control.
         var solrServiceURL = HPOTerm.getServiceURL();
         item._suggest = new PhenoTips.widgets.Suggest(item, {
           script: solrServiceURL + 'rows=100&',
@@ -253,12 +303,18 @@ var NodeMenu = Class.create({
             'acceptFreeText' : true
           });
         }
+        */
+
         item.addClassName('initialized');
+        
+        /* 
+        // Code of the original Open Pedigree HPO selector control.
         document.observe('ms:suggest:containerCreated', function(event) {
           if (event.memo && event.memo.suggest === item._suggest) {
             item._suggest.container.setStyle({'overflow': 'auto', 'maxHeight': document.viewport.getHeight() - item._suggest.container.cumulativeOffset().top + 'px'});
           }
         });
+        */
       }
     });
 
@@ -463,22 +519,46 @@ var NodeMenu = Class.create({
       hpoPicker._getValue = function() {
         var results = [];
         var container = this.up('.field-box');
+        if (this.value) {
+          var hpos = this.value.split(',');
+          hpos.each(function(item){
+            // Item is hpo term name in display format (ID | name).
+            results.push(new HPOTerm(null, item));
+          })
+        }
+        /*
+        // Code of the original Open Pedigree HPO selector control.
         if (container) {
           container.select('input[type=hidden][name=' + data.name + ']').each(function(item){
             results.push(new HPOTerm(item.value, item.next('.value') && item.next('.value').firstChild.nodeValue || item.value));
           });
         }
+        */
         return [results];
       }.bind(hpoPicker);
       // Forward the 'custom:selection:changed' to the input
       var _this = this;
-      document.observe('custom:selection:changed', function(event) {
+      /*
+      // Code of the original Open Pedigree HPO selector control.
+      document.observe('custom:selection:changed', function(event) {     
         if (event.memo && event.memo.fieldName == data.name && event.memo.trigger && event.findElement() != event.memo.trigger && !event.memo.trigger._silent) {
           Event.fire(event.memo.trigger, 'custom:selection:changed');
           _this.reposition();
         }
       });
-      this._attachFieldEventListeners(hpoPicker, ['custom:selection:changed']);
+      */
+
+      document.observe('custom:selectize:changed', function(event) {
+        if (event.memo && event.memo.fieldName == data.name && event.memo.trigger && event.findElement() != event.memo.trigger && !event.memo.trigger._silent
+            && event.memo.$input) {
+          Event.fire(event.memo.$input[0], 'custom:selectize:changed');
+          _this.reposition();
+        }
+      });
+      
+      // Code of the original Open Pedigree HPO selector control.
+      //this._attachFieldEventListeners(hpoPicker, ['custom:selection:changed']);
+      this._attachFieldEventListeners(hpoPicker, ['custom:selectize:changed']);
       return result;
     },
     'gene-picker' : function (data) {
@@ -701,6 +781,20 @@ var NodeMenu = Class.create({
     'hpo-picker' : function (container, values) {
       var _this = this;
       var target = container.down('input[type=text].suggest-hpo');
+      if (target.selectize){
+        if (values.length == 0) {
+          target.selectize.clear(true);
+        }
+        if (values.length > 0) {
+          values.each(function(v) {
+            var hpoTerm = new HPOTerm(v.id, v.value);
+            target.selectize.addOption({value: hpoTerm.getDisplayName(), id: hpoTerm.getdDesanitizedID(), name: hpoTerm.getName()});
+            target.selectize.addItem(hpoTerm.getDisplayName(), true);
+          });
+        }
+      }
+      /*
+      // Code of the original Open Pedigree HPO selector control.
       if (target && target._suggestPicker) {
         target._silent = true;
         target._suggestPicker.clearAcceptedList();
@@ -711,6 +805,7 @@ var NodeMenu = Class.create({
         }
         target._silent = false;
       }
+      */
     },
     'gene-picker' : function (container, values) {
       var _this = this;
