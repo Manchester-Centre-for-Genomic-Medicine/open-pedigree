@@ -13,6 +13,8 @@ import '../public/vendor/phenotips/Widgets.css';
 import '../public/vendor/phenotips/DateTimePicker.css';
 import '../public/vendor/phenotips/Skin.css';
 
+import HPOTerm from 'pedigree/hpoTerm';
+
 document.observe('dom:loaded', async function () {
   let auth0 = null;
   const configureAuth0 = async () => {
@@ -143,7 +145,7 @@ document.observe('dom:loaded', async function () {
           where: {
             primary_identifier: {_eq: $primaryIdentifier}
           }
-        ) {
+      ) {
           date_of_birth
           date_of_death
           deceased
@@ -151,9 +153,18 @@ document.observe('dom:loaded', async function () {
           last_name
           primary_identifier
           sex
+          phenopacket {
+            phenotypic_features(where:{presence: {_eq: "PRESENT"}}) {
+              hpo {
+                id
+                name
+              }
+            }
+          }
         }
       }
     `;
+
     const variables = {
       primaryIdentifier: event.memo.value,
     };
@@ -175,5 +186,11 @@ document.observe('dom:loaded', async function () {
     event.memo.node.setDeathDate(
       new Date(result.data?.individual[0]?.date_of_death)
     );
+    var hpos = [];
+    result.data?.individual[0]?.phenopacket.phenotypic_features.each(function(v) {
+      hpos.push(new HPOTerm(v.hpo.id, v.hpo.name));
+    });
+    event.memo.node.setHPO(hpos);
+    editor.getNodeMenu().update();
   });
 });
