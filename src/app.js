@@ -80,9 +80,9 @@ document.observe('dom:loaded', async function () {
         if (urlParams.has('phenopacket_id')) {
           const query = `
             query GetOpenPedigreeData($phenopacketId: uuid!) {
-              family(where: {phenopacket_id: {_eq: $phenopacketId}}) {
+              pedigree:open_pedigree_data(where: {phenopacket_id: {_eq: $phenopacketId}}) {
                 id
-                rawData: raw_open_pedigree_data
+                rawData: pedigree_data
               }
             }
           `;
@@ -95,7 +95,9 @@ document.observe('dom:loaded', async function () {
           });
 
           return onSuccess(
-            result?.data?.family[0]?.rawData?.jsonData ?? null
+            JSON.stringify(
+              result?.data?.pedigree[0]?.rawData?.jsonData ?? null
+            )
           );
         } else {
           console.warn('No phenopacket ID has been specified. No data will be saved.')
