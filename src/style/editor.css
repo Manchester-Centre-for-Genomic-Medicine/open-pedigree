@@ -611,6 +611,31 @@
 }
 
 /* ===========================================
+ * NODE MENU DISORDER TERM SELECTIZE.JS
+ */
+
+ .selectize-control.suggest-orphanet .selectize-dropdown > div {
+  border-bottom: 1px solid rgba(0,0,0,0.05);
+}
+
+.selectize-control.suggest-orphanet .selectize-dropdown .title {
+  display: block;
+}
+
+.selectize-control.suggest-orphanet .selectize-dropdown .ontologyId {
+  font-weight: bold;
+  margin-right: 5px;
+}
+
+.selectize-control.suggest-orphanet .selectize-dropdown .name {
+  margin-right: 5px;
+}
+
+.selectize-control.suggest-orphanet.loading::before {
+  opacity: 0.4;
+}
+
+/* ===========================================
  * NODE TYPE OPTIONS
  */
 
