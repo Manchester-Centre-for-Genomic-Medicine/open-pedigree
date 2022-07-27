@@ -224,21 +224,23 @@ var NodeMenu = Class.create({
               return div;
             },
           },
-          load: function(query, callback) {
-            if (!query.length) return callback();
+          onInitialize: function() {
+            var _this = this
             jQuery.ajax({
-              // Note that "max" url parameter sets the number of suggestions retireved form the HPO API (lower = less laggy).
-              url: 'https://hpo.jax.org/api/hpo/search/?q=' + encodeURIComponent(query) + '&max=25&offset=0&category=terms',
+              url: 'https://hpo.jax.org/api/hpo/search/?q=HP%3A&max=-1&offset=0&category=terms',
               type: 'GET',
+              async: false,
               error: function() {
-                callback();
+                console.log('ERROR: Failed to obtain HPO terms from hpo.jax.org/api.');
+                return;
               },
               success: function(res) {
                 res.terms.each(function(item){
                   var hpoTerm = new HPOTerm(item.id, item.name);
                   item.value = hpoTerm.getDisplayName();
-                })
-                callback(res.terms);
+                  _this.addOption(item);
+                });
+                _this.refreshOptions();
               }
             });
           },
@@ -246,7 +248,6 @@ var NodeMenu = Class.create({
             this.fieldName = 'hpo_positive';
             document.fire('custom:selectize:changed', this);
           },
-          
         });
         
         /*
