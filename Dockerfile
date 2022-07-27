@@ -6,7 +6,7 @@ WORKDIR /usr/src/app
 
 # install any dependencies
 # we copy package*.json over to make use of docker's cached builds
-COPY package*.json .
+COPY package*.json ./
 RUN npm install \
     && npm cache clean --force
 
@@ -14,5 +14,5 @@ RUN npm install \
 COPY . .
 
 # run the application and make it available outside the container
-ENTRYPOINT ["npm", "run", "start-docker"]
+CMD ["npm", "run", "start-docker"]
 EXPOSE 9000

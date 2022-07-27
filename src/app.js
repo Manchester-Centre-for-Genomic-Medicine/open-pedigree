@@ -13,9 +13,10 @@ import '../public/vendor/phenotips/Widgets.css';
 import '../public/vendor/phenotips/DateTimePicker.css';
 import '../public/vendor/phenotips/Skin.css';
 
+import HPOTerm from 'pedigree/hpoTerm';
+
 document.observe('dom:loaded', async function () {
   let auth0 = null;
-  console.log(Object.keys(process.env));
   const configureAuth0 = async () => {
     auth0 = await new Auth0Client({
       domain: "gen-o-test.eu.auth0.com",
@@ -68,9 +69,9 @@ document.observe('dom:loaded', async function () {
         if (urlParams.has('phenopacket_id')) {
           const query = `
             query GetOpenPedigreeData($phenopacketId: uuid!) {
-              family(where: {phenopacket_id: {_eq: $phenopacketId}}) {
+              pedigree:open_pedigree_data(where: {phenopacket_id: {_eq: $phenopacketId}}) {
                 id
-                rawData: raw_open_pedigree_data
+                rawData: pedigree_data
               }
             }
           `;
@@ -83,7 +84,9 @@ document.observe('dom:loaded', async function () {
           });
 
           return onSuccess(
-            result?.data?.family[0]?.rawData?.jsonData ?? null
+            JSON.stringify(
+              result?.data?.pedigree[0]?.rawData?.jsonData ?? null
+            )
           );
         } else {
           console.warn('No phenopacket ID has been specified. No data will be saved.')
@@ -121,5 +124,64 @@ document.observe('dom:loaded', async function () {
         //setSaveInProgress(false);
       },
     } 
+  });
+
+  // hook externalid up to the gen-o database
+  document.observe('pedigree:person:set:externalid', async (event) => {
+    const query = `
+      query GetDemographics(
+        $primaryIdentifier: String!
+      ) {
+        individual(
+          where: {
+            primary_identifier: {_eq: $primaryIdentifier}
+          }
+      ) {
+          date_of_birth
+          date_of_death
+          deceased
+          first_name
+          last_name
+          primary_identifier
+          sex
+          phenopacket {
+            phenotypic_features(where:{presence: {_eq: "PRESENT"}}) {
+              hpo {
+                id
+                name
+              }
+            }
+          }
+        }
+      }
+    `;
+
+    const variables = {
+      primaryIdentifier: event.memo.value,
+    };
+    const result = await graphql({ query, variables });
+    event.memo.node.setFirstName(
+      result.data?.individual[0]?.first_name
+    );
+    event.memo.node.setLastName(
+      result.data?.individual[0]?.last_name
+    );
+    event.memo.node.setLifeStatus(
+      result.data?.individual[0]?.deceased
+        ? 'deceased'
+        : 'alive'
+    );
+    event.memo.node.setBirthDate(
+      new Date(result.data?.individual[0]?.date_of_birth)
+    );
+    event.memo.node.setDeathDate(
+      new Date(result.data?.individual[0]?.date_of_death)
+    );
+    var hpos = [];
+    result.data?.individual[0]?.phenopacket.phenotypic_features.each(function(v) {
+      hpos.push(new HPOTerm(v.hpo.id, v.hpo.name));
+    });
+    event.memo.node.setHPO(hpos);
+    editor.getNodeMenu().update();
   });
 });
