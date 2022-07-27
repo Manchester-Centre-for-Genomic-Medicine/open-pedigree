@@ -111,8 +111,67 @@ var NodeMenu = Class.create({
       }
     });
     // disease
-    this.form.select('input.suggest-omim').each(function(item) {
+    this.form.select('input.suggest-orphanet').each(function(item) {
       if (!item.hasClassName('initialized')) {
+        jQuery(item).selectize({
+          maxItems: null,
+          valueField: 'value',
+          searchField: ['name', 'id'],
+          options: [],
+          create: false,
+          maxOptions: 100,
+          delimiter: '||',
+          render: {
+            item: function(item, escape) {
+              return '<div>' + escape(item.value) + '</div>';
+            },
+            option: function(item, escape) {
+              var div = '<div>' +
+                '<span class="title">' +
+                '<span class="ontologyId">' + 'ORPHA:' + escape(item.id) + '&nbsp;'.repeat(8 - item.id.toString().length) + '</span>' +
+                '<span class="name">' + escape(item.name) + '</span>';
+              if (item.synonym){
+                div += '<span class="synonym">(' + escape(item.synonym) + ')</span>';
+              }
+              div += '</span></div>';
+              return div;
+            },
+          },
+					onInitialize: function() {
+						var _this = this
+						jQuery.ajax({
+							url: 'https://api.orphacode.org/EN/ClinicalEntity',
+							type: 'GET',
+							headers: {
+                // ORPHA requires api key, but it can be anything.
+								'apikey': '5d29dd2f-8021-41e2-8146-3548d7ba409b'
+							},
+							async: false,
+							error: function() {
+								return;
+							},
+							success: function(res) {
+                res.forEach(function(item) {
+                  var disorder = new Disorder(item['ORPHAcode'], item['Preferred term'])
+                  item = {
+                    id: disorder.getDesanitizedDisorderID(),
+                    name: disorder.getName(),
+                    value: disorder.getDisplayName(),
+                  }
+									_this.addOption(item);
+								});
+								_this.refreshOptions();
+							}
+						});
+					},
+          onChange: function() {
+            this.fieldName = 'disorders';
+            document.fire('custom:selectize:changed', this);
+          },          
+        });
+
+        /*
+        // Code of the original Open Pedigree disorder selector control.
         // Create the Suggest.
         item._suggest = new PhenoTips.widgets.Suggest(item, {
           script: Disorder.getOMIMServiceURL() + '&',
@@ -150,12 +209,18 @@ var NodeMenu = Class.create({
             'acceptFreeText' : true
           });
         }
+        */
+
         item.addClassName('initialized');
+        
+        /*
+        // Code of the original Open Pedigree disorder selector control.
         document.observe('ms:suggest:containerCreated', function(event) {
           if (event.memo && event.memo.suggest === item._suggest) {
             item._suggest.container.setStyle({'overflow': 'auto', 'maxHeight': document.viewport.getHeight() - item._suggest.container.cumulativeOffset().top + 'px'});
           }
         });
+        */
       }
     });
     // genes
@@ -490,27 +555,50 @@ var NodeMenu = Class.create({
     },
     'disease-picker' : function (data) {
       var result = this._generateEmptyField(data);
-      var diseasePicker = new Element('input', {type: 'text', 'class': 'suggest multi suggest-omim', name: data.name});
+      var diseasePicker = new Element('input', {type: 'text', 'class': 'suggest multi suggest-orphanet', name: data.name});
       result.insert(diseasePicker);
       diseasePicker._getValue = function() {
         var results = [];
+        if (this.value) {
+          var disorders = this.value.split('||');
+          disorders.each(function(item){
+            // Item is disorders term name in display format (ID | name).
+            results.push(new Disorder(null, item));
+          })
+        }
+        /*
+        // Code of the original Open Pedigree disorder selector control.
         var container = this.up('.field-box');
         if (container) {
           container.select('input[type=hidden][name=' + data.name + ']').each(function(item){
             results.push(new Disorder(item.value, item.next('.value') && item.next('.value').firstChild.nodeValue || item.value));
           });
         }
+        */
         return [results];
       }.bind(diseasePicker);
       // Forward the 'custom:selection:changed' to the input
       var _this = this;
+      /*
+      // Code of the original Open Pedigree disorder selector control.
       document.observe('custom:selection:changed', function(event) {
         if (event.memo && event.memo.fieldName == data.name && event.memo.trigger && event.findElement() != event.memo.trigger && !event.memo.trigger._silent) {
           Event.fire(event.memo.trigger, 'custom:selection:changed');
           _this.reposition();
         }
       });
-      this._attachFieldEventListeners(diseasePicker, ['custom:selection:changed']);
+      */
+      document.observe('custom:selectize:changed', function(event) {
+        if (event.memo && event.memo.fieldName == data.name && event.memo.trigger && event.findElement() != event.memo.trigger && !event.memo.trigger._silent
+            && event.memo.$input) {
+          Event.fire(event.memo.$input[0], 'custom:selectize:changed');
+          _this.reposition();
+        }
+      });
+
+      // Code of the original Open Pedigree disorder selector control.
+      //this._attachFieldEventListeners(diseasePicker, ['custom:selection:changed']);
+      this._attachFieldEventListeners(diseasePicker, ['custom:selectize:changed']);
       return result;
     },
     'hpo-picker' : function (data) {
@@ -519,7 +607,7 @@ var NodeMenu = Class.create({
       result.insert(hpoPicker);
       hpoPicker._getValue = function() {
         var results = [];
-        var container = this.up('.field-box');
+        // var container = this.up('.field-box');
         if (this.value) {
           var hpos = this.value.split(',');
           hpos.each(function(item){
@@ -529,6 +617,7 @@ var NodeMenu = Class.create({
         }
         /*
         // Code of the original Open Pedigree HPO selector control.
+        var container = this.up('.field-box');
         if (container) {
           container.select('input[type=hidden][name=' + data.name + ']').each(function(item){
             results.push(new HPOTerm(item.value, item.next('.value') && item.next('.value').firstChild.nodeValue || item.value));
@@ -766,7 +855,22 @@ var NodeMenu = Class.create({
     },
     'disease-picker' : function (container, values) {
       var _this = this;
-      var target = container.down('input[type=text].suggest-omim');
+      var target = container.down('input[type=text].suggest-orphanet');
+      if (target.selectize){
+        if (values.length == 0) {
+          target.selectize.clear(true);
+        }
+        if (values.length > 0) {
+          values.each(function(v) {
+            var disorder = new Disorder(v.id, v.value);
+            target.selectize.addOption({value: disorder.getDisplayName(), id: disorder.getDesanitizedDisorderID(), name: disorder.getName()});
+            target.selectize.addItem(disorder.getDisplayName(), true);
+            _this._updateDisorderColor(v.id, editor.getDisorderLegend().getObjectColor(v.id));
+          });
+        }
+      }
+      /*
+      // Code of the original Open Pedigree disorder selector control.
       if (target && target._suggestPicker) {
         target._silent = true;
         target._suggestPicker.clearAcceptedList();
@@ -778,6 +882,7 @@ var NodeMenu = Class.create({
         }
         target._silent = false;
       }
+      */
     },
     'hpo-picker' : function (container, values) {
       var _this = this;

@@ -1320,7 +1320,6 @@ GA4GHFHIRConverter.addConditions = function (nodeProperties, ref, condtions) {
     let disorders = nodeProperties['disorders'];
     let disorderLegend = editor.getDisorderLegend();
     for (let i = 0; i < disorders.length; i++) {
-      let disorderTerm = disorderLegend.getTerm(disorders[i]);
       let fhirCondition = {
         'resourceType': 'Condition',
         'id': generateUUID(),
