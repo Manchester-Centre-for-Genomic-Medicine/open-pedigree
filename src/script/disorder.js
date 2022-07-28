@@ -10,6 +10,10 @@ import { isInt } from 'pedigree/model/helpers';
 var Disorder = Class.create( {
 
   initialize: function(disorderID, name, callWhenReady, source = 'ORPHA') {
+    // In case ID is a number.
+    if (disorderID) {
+      disorderID = disorderID.toString();
+    }
     // user-defined disorders
     if (name == null && !isInt(disorderID)) {
       name = Disorder.desanitizeID(disorderID);
@@ -54,7 +58,7 @@ var Disorder = Class.create( {
     * Returns the disorderID of the disorder
     */
   getDesanitizedDisorderID: function() {
-    return Disorder.sanitizeID(this._disorderID);
+    return Disorder.desanitizeID(this._disorderID);
   },
 
   /*
@@ -68,7 +72,7 @@ var Disorder = Class.create( {
     * Returns the display name of the term in format "hpoID | name"
     */
   getDisplayName: function() {
-    return this._source + ':' + Disorder.sanitizeID(this._disorderID) + ' | ' + this._name;
+    return this._source + ':' + Disorder.desanitizeID(this._disorderID) + ' | ' + this._name;
   },
 
   load: function(callWhenReady) {
