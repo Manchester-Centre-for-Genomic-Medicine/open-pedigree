@@ -185,3 +185,16 @@ document.observe('dom:loaded', async function () {
     editor.getNodeMenu().update();
   });
 });
+
+document.observe('pedigree:person:set:disorders', function(event) {
+  // Note for future, for some reason it is executed twice on update...
+  // Function to print Person external ID and disorder terms when the latter are updated.
+  console.log('Person disorders were updated!')
+  console.log('Person external ID:', event.memo.node.getExternalID())
+  console.log('Disorders:')
+  var disorders = event.memo.value
+  for(var i = 0; i < disorders.length; i++) {
+    var disorder = disorders[i]
+    console.log(`${i}) ID: ${disorder.getDesanitizedDisorderID()}, Name: ${disorder.getName()}`);
+  }
+});
