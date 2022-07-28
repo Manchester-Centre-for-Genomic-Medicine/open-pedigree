@@ -137,20 +137,20 @@ var NodeMenu = Class.create({
               return div;
             },
           },
-					onInitialize: function() {
-						var _this = this
-						jQuery.ajax({
-							url: 'https://api.orphacode.org/EN/ClinicalEntity',
-							type: 'GET',
-							headers: {
+          onInitialize: function() {
+            var _this = this
+            jQuery.ajax({
+              url: 'https://api.orphacode.org/EN/ClinicalEntity',
+              type: 'GET',
+              headers: {
                 // ORPHA requires api key, but it can be anything.
-								'apikey': '5d29dd2f-8021-41e2-8146-3548d7ba409b'
-							},
-							async: false,
-							error: function() {
-								return;
-							},
-							success: function(res) {
+                'apikey': '5d29dd2f-8021-41e2-8146-3548d7ba409b'
+              },
+              async: false,
+              error: function() {
+                return;
+              },
+              success: function(res) {
                 res.forEach(function(item) {
                   var disorder = new Disorder(item['ORPHAcode'], item['Preferred term'])
                   item = {
@@ -158,12 +158,12 @@ var NodeMenu = Class.create({
                     name: disorder.getName(),
                     value: disorder.getDisplayName(),
                   }
-									_this.addOption(item);
-								});
-								_this.refreshOptions();
-							}
-						});
-					},
+                  _this.addOption(item);
+                });
+                _this.refreshOptions();
+              }
+            });
+          },
           onChange: function() {
             this.fieldName = 'disorders';
             document.fire('custom:selectize:changed', this);
