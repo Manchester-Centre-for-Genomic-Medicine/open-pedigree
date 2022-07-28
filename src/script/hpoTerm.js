@@ -58,6 +58,18 @@ var HPOTerm = Class.create( {
   },
 
   load: function(callWhenReady) {
+    var _this = this;
+    jQuery.ajax({
+      url: 'https://hpo.jax.org/api/hpo/term/' + encodeURIComponent(HPOTerm.desanitizeID(this._hpoID)),
+      type: 'GET',
+      async: true,
+      error: _this.onDataError.bind(_this),
+      success: _this.onDataReady.bind(_this),
+      complete: callWhenReady ? callWhenReady : {},
+    });
+
+    /*
+    // Code of the original Open Pedigree HPO term class.
     var baseServiceURL = HPOTerm.getServiceURL();
     var queryURL       = baseServiceURL + '&q=id%3A' + HPOTerm.desanitizeID(this._hpoID).replace(':','%5C%3A');
     //console.log("QueryURL: " + queryURL);
@@ -67,9 +79,26 @@ var HPOTerm = Class.create( {
       //onComplete: complete.bind(this)
       onComplete: callWhenReady ? callWhenReady : {}
     });
+    */
+  },
+
+  onDataError : function(response) {
+    console.log('onDataError', response);
+    var err = response.responseJSON;
+    this._name = err.message;
+    console.log('ORPHANET API ERROR: error = ' + err.error + ', message = ' + err.message);
   },
 
   onDataReady : function(response) {
+    console.log('onDataReady', response);
+    try {
+      this._name = response.details.name;
+      console.log('LOADED HPO TERM: id = ' + HPOTerm.desanitizeID(this._hpoID) + ', name = ' + this._name);
+    } catch (err) {
+      console.log('[LOAD HPO TERM] Error: ' +  err);
+    }
+    /*
+    // Code of the original Open Pedigree HPO term class.
     try {
       var parsed = JSON.parse(response.responseText);
       //console.log(JSON.stringify(parsed));
@@ -78,6 +107,7 @@ var HPOTerm = Class.create( {
     } catch (err) {
       console.log('[LOAD HPO TERM] Error: ' +  err);
     }
+    */
   }
 });
 
@@ -104,11 +134,13 @@ HPOTerm.isValidID = function(id) {
   return pattern.test(id);
 };
 
+/*
+// Code of the original Open Pedigree HPO term class.
 HPOTerm.getServiceURL = function() {
   //return new XWiki.Document('SolrService', 'PhenoTips').getURL('get') + '?';
   // This suggestion from the link doues not work, 
   // but some valid link is needed to input HPO terms as free text.
   return 'https://raw.githubusercontent.com/obophenotype/human-phenotype-ontology/master/hp.obo?'
 };
-
+*/
 export default HPOTerm;
