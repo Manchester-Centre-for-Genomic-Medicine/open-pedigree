@@ -178,7 +178,7 @@ document.observe('dom:loaded', async function () {
       new Date(result.data?.individual[0]?.date_of_death)
     );
     var hpos = [];
-    result.data?.individual[0]?.phenopacket.phenotypic_features.each(function(v) {
+    result.data?.individual[0]?.phenopacket?.phenotypic_features?.each(function(v) {
       hpos.push(new HPOTerm(v.hpo.id, v.hpo.name));
     });
     event.memo.node.setHPO(hpos);
