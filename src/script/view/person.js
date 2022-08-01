@@ -4,6 +4,7 @@ import AbstractPerson from 'pedigree/view/abstractPerson';
 import PersonVisuals from 'pedigree/view/personVisuals';
 import HPOTerm from 'pedigree/hpoTerm';
 import Disorder from 'pedigree/disorder';
+import Gene from 'pedigree/gene';
 
 /**
  * Person is a class representing any AbstractPerson that has sufficient information to be
@@ -486,8 +487,10 @@ var Person = Class.create(AbstractPerson, {
     for (var i = 0; i < this.getDisorders().length; i++) {
       result.push(editor.getDisorderLegend().getObjectColor(this.getDisorders()[i]));
     }
-    for (var i = 0; i < this.getGenes().length; i++) {
-      result.push(editor.getGeneLegend().getObjectColor(this.getGenes()[i]));
+    // Candidate genes are stored in "{ID} | {Symbol}" (e.g. DisplayName) in person object, 
+    // but only symbols are used in gene legend.
+    for (var i = 0; i < this.getGeneSymbols().length; i++) {
+      result.push(editor.getGeneLegend().getObjectColor(this.getGeneSymbols()[i]));
     }
     return result;
   },
@@ -660,9 +663,14 @@ var Person = Class.create(AbstractPerson, {
      * @method addGenes
      */
   addGene: function(gene) {
-    if (this.getGenes().indexOf(gene) == -1) {
-      editor.getGeneLegend().addCase(gene, gene, this.getID());
-      this.getGenes().push(gene);
+    if (typeof gene != 'object'){
+      gene = new Gene(null, gene);
+    }
+    if (this.getGenes().indexOf(gene.getDisplayName()) == -1) {
+      // Candidate genes are stored in "{ID} | {Symbol}" (e.g. DisplayName) in person object, 
+      // but only symbols are used in gene legend.
+      editor.getGeneLegend().addCase(gene.getSymbol(), gene.getSymbol(), this.getID());
+      this.getGenes().push(gene.getDisplayName());
     }
   },
 
@@ -672,9 +680,14 @@ var Person = Class.create(AbstractPerson, {
      * @method removeGene
      */
   removeGene: function(gene) {
-    if (this.getGenes().indexOf(gene) !== -1) {
-      editor.getGeneLegend().removeCase(gene, this.getID());
-      this._candidateGenes = this.getGenes().without(gene);
+    if (typeof gene != 'object'){
+      gene = new Gene(null, gene);
+    }
+    if (this.getGenes().indexOf(gene.getDisplayName()) !== -1) {
+      // Candidate genes are stored in "{ID} | {Symbol}" (e.g. DisplayName) in person object, 
+      // but only symbols are used in gene legend.
+      editor.getGeneLegend().removeCase(gene.getSymbol(), this.getID());
+      this._candidateGenes = this.getGenes().without(gene.getDisplayName());
     }
   },
 
@@ -695,13 +708,28 @@ var Person = Class.create(AbstractPerson, {
   },
 
   /**
-     * Returns a list of candidate genes for this person.
+     * Returns a list of candidate genes for this person in "{ID} | {SYMBOL}" format.
      *
      * @method getGenes
      * @return {Array} List of gene names.
      */
   getGenes: function() {
     return this._candidateGenes;
+  },
+
+  /**
+   * Returns a list of candidate gene symbols for this person.
+   *
+   * @method getGenes
+   * @return {Array} List of gene names.
+   */
+  getGeneSymbols: function() {
+    var result = [];
+    this._candidateGenes.each(function(gene) {
+      gene = new Gene(null, gene);
+      result.push(gene.getSymbol());
+    });
+    return result;
   },
 
   /**

@@ -636,6 +636,28 @@
 }
 
 /* ===========================================
+ * NODE MENU GENES TERM SELECTIZE.JS
+ */
+
+.selectize-control.suggest-genes .selectize-dropdown > div {
+  border-bottom: 1px solid rgba(0,0,0,0.05);
+}
+
+.selectize-control.suggest-genes .selectize-dropdown .id {
+  font-weight: bold;
+  margin-left: 5px;
+}
+
+.selectize-control.suggest-genes .selectize-dropdown .gene {
+  width: 95px;
+  display: inline-block;
+}
+
+.selectize-control.suggest-genes .selectize-dropdown .italic {
+  font-style: italic;
+}
+
+/* ===========================================
  * NODE TYPE OPTIONS
  */
 

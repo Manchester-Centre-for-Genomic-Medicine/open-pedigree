@@ -19,9 +19,20 @@ document.observe('dom:loaded', async function () {
   let auth0 = null;
   const configureAuth0 = async () => {
     auth0 = await new Auth0Client({
-      domain: "gen-o-test.eu.auth0.com",
-      client_id: "Kx350GeJFnWb1mYc5H3GjMvG8hrc2OYR",
-      audience: "https://gen-o-test.eu.auth0.com/api/v2/",
+      // LIVE
+      //domain: "gen-o.eu.auth0.com",
+      //client_id: "cMDwFfxF4hC1GOs6W35HdDSPmregh6A7",
+      //audience: "https://gen-o.eu.auth0.com/api/v2/",
+
+      // TEST
+      //domain: "gen-o-test.eu.auth0.com",
+      //client_id: "Kx350GeJFnWb1mYc5H3GjMvG8hrc2OYR",
+      //audience: "https://gen-o-test.eu.auth0.com/api/v2/",
+
+      // DEVELOP
+      domain: "gen-o-dev.eu.auth0.com",
+      client_id: "d3YJUQgU53bhu4O7nhPtFnXM4LjNUb6U",
+      audience: "https://gen-o-dev.eu.auth0.com/api/v2/",
     });
   };
 
@@ -196,5 +207,29 @@ document.observe('pedigree:person:set:disorders', function(event) {
   for(var i = 0; i < disorders.length; i++) {
     var disorder = disorders[i]
     console.log(`${i}) ID: ${disorder.getDesanitizedDisorderID()}, Name: ${disorder.getName()}`);
+  }
+});
+
+document.observe('pedigree:person:set:hpo', function(event) {
+  // Function to print Person external ID and HPO terms when the latter are updated.
+  console.log('Person HPO Terms were updated!');
+  console.log('Person external ID:', event.memo.node.getExternalID());
+  console.log('HPO Terms:');
+  var hpos = event.memo.value;
+  for(var i = 0; i < hpos.length; i++) {
+    var hpo = hpos[i];
+    console.log(`${i}) ID: ${HPOTerm.desanitizeID(hpo.getID())}, Name: ${hpo.getName()}`);
+  }
+});
+
+document.observe('pedigree:person:set:genes', function(event) {
+  // Function to print Person external ID and genes when the latter are updated.
+  console.log('Person genes were updated!');
+  console.log('Person external ID:', event.memo.node.getExternalID());
+  console.log('Genes:');
+  var genes = event.memo.value;
+  for(var i = 0; i < genes.length; i++) {
+    var gene = genes[i];
+    console.log(`${i}) ID: ${gene.getID()}, Name: ${gene.getSymbol()}`);
   }
 });
