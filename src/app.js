@@ -28,12 +28,24 @@ document.observe('dom:loaded',function() {
 
 document.observe('pedigree:person:set:hpo', function(event) {
   // Function to print Person external ID and HPO terms when the latter are updated.
-  console.log('Person HPO Terms were updated!')
-  console.log('Person external ID:', event.memo.node.getExternalID())
-  console.log('HPO Terms:')
-  var hpos = event.memo.value
+  console.log('Person HPO Terms were updated!');
+  console.log('Person external ID:', event.memo.node.getExternalID());
+  console.log('HPO Terms:');
+  var hpos = event.memo.value;
   for(var i = 0; i < hpos.length; i++) {
-    var hpo = hpos[i]
+    var hpo = hpos[i];
     console.log(`${i}) ID: ${HPOTerm.desanitizeID(hpo.getID())}, Name: ${hpo.getName()}`);
+  }
+});
+
+document.observe('pedigree:person:set:genes', function(event) {
+  // Function to print Person external ID and genes when the latter are updated.
+  console.log('Person genes were updated!');
+  console.log('Person external ID:', event.memo.node.getExternalID());
+  console.log('Genes:');
+  var genes = event.memo.value;
+  for(var i = 0; i < genes.length; i++) {
+    var gene = genes[i];
+    console.log(`${i}) ID: ${gene.getID()}, Name: ${gene.getSymbol()}`);
   }
 });
