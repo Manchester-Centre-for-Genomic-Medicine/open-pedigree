@@ -127,14 +127,10 @@ var NodeMenu = Class.create({
               return '<div>' + escape(item.value) + '</div>';
             },
             option: function(item, escape) {
-              var div = '<div>' +
-                '<span class="title">' +
-                '<span class="ontologyId">' + 'ORPHA:' + escape(item.id) + '&nbsp;'.repeat(8 - item.id.toString().length) + '</span>' +
-                '<span class="name">' + escape(item.name) + '</span>';
-              if (item.synonym){
-                div += '<span class="synonym">(' + escape(item.synonym) + ')</span>';
-              }
-              div += '</span></div>';
+              var div = '<div><table>' +
+              '<tr><td><span class="id disorder">' + 'ORPHA:' + escape(item.id) + '</span></td>' +
+              '<td><span class="name">' + escape(item.name) + '</span></td></tr>';
+              div += '</table></div>';
               return div;
             },
           },
@@ -244,8 +240,7 @@ var NodeMenu = Class.create({
               return '<div>' + escape(item.value) + '</div>';
             },
             option: function(item, escape) {
-              var div = '<div>' +
-              '<table>' +
+              var div = '<div><table>' +
               '<tr><td><span class="id gene">' + escape(item.id) + '</span></td>' +
               '<td><span class="name">' + escape(item.name) + '</span></td></tr>' + 
               '<tr><td /><td><span class="italic">' + escape(item.group) + '</span></td></tr>';
@@ -346,14 +341,13 @@ var NodeMenu = Class.create({
               return '<div>' + escape(item.value) + '</div>';
             },
             option: function(item, escape) {
-              var div = '<div>' +
-                '<span class="title">' +
-                '<span class="ontologyId">' + escape(item.id) + '</span>' +
-                '<span class="name">' + escape(item.name) + '</span>';
+              var div = '<div><table>' +
+              '<tr><td><span class="id hpo">' + escape(item.id) + '</span></td>' +
+              '<td><span class="name">' + escape(item.name) + '</span></td></tr>';
               if (item.synonym){
-                div += '<span class="synonym">(' + escape(item.synonym) + ')</span>'
+                '<tr><td /><td><span class="italic">' + escape(item.synonym) + '</span></td></tr>';
               }
-              div += '</span></div>';
+              div += '</table></div>';
               return div;
             },
           },
