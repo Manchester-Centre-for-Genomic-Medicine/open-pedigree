@@ -39,7 +39,7 @@ var HPOTerm = Class.create( {
   /*
     * Returns the desanitized hpoID of the phenotype
     */
-  getdDesanitizedID: function() {
+  getDesanitizedID: function() {
     return HPOTerm.desanitizeID(this._hpoID);
   },
 

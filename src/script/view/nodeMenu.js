@@ -789,7 +789,7 @@ var NodeMenu = Class.create({
         if (values.length > 0) {
           values.each(function(v) {
             var hpoTerm = new HPOTerm(v.id, v.value);
-            target.selectize.addOption({value: hpoTerm.getDisplayName(), id: hpoTerm.getdDesanitizedID(), name: hpoTerm.getName()});
+            target.selectize.addOption({value: hpoTerm.getDisplayName(), id: hpoTerm.getDesanitizedID(), name: hpoTerm.getName()});
             target.selectize.addItem(hpoTerm.getDisplayName(), true);
           });
         }
