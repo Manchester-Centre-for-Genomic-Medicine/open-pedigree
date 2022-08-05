@@ -232,11 +232,13 @@ var NodeMenu = Class.create({
           valueField: 'value',
           searchField: ['id', 'name'],
           options: [],
-          // Remove this function to disable custom gene input and allow only HGNC genes.
+          /*
+          // Uncomment this function to enable custom gene input (i.e. genes without HGNC IDs).
           create: function(input) {
             var gene = new Gene(null, input);
             return {'id': gene.getID(), 'name': gene.getSymbol(), 'value': gene.getDisplayName()};
           },
+          */
           maxOptions: 100,
           delimiter: ',',
           render: {
