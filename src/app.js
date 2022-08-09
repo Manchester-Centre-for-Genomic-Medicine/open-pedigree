@@ -211,7 +211,7 @@ document.observe('dom:loaded', async function () {
 
   // hook externalid up to the gen-o database
   document.observe('pedigree:person:set:externalid', async (event) => {
-    var result = await getDemographicsGenO(event.memo.value);  
+    var result = await getDemographicsGenO(event.memo.value);
     if (result.data?.individual[0]) {
       clearNodeDemographics(event.memo.node);
       event.memo.node.setFirstName(
@@ -231,13 +231,13 @@ document.observe('dom:loaded', async function () {
       event.memo.node.setDeathDate(
         new Date(result.data?.individual[0]?.date_of_death)
       );
+      event.memo.node.setGender(
+        result.data?.individual[0]?.sex
+      );
       var hpos = [];
       result.data?.individual[0]?.phenopacket?.phenotypic_features?.each(function(v) {
         hpos.push(new HPOTerm(v.hpo.id, v.hpo.name));
       });
-      event.memo.node.setGender(
-        result.data?.individual[0]?.sex
-      );
       event.memo.node.setHPO(hpos);
     } else {
       var result = await getDemographicsPDS(event.memo.value);
@@ -263,6 +263,94 @@ document.observe('dom:loaded', async function () {
       }
     }
     editor.getNodeMenu().update();
+  });
+
+  const getPhenopacketID = async function (nhsID) {
+    const query = `
+      query GetDemographics(
+        $primaryIdentifier: String!
+      ) {
+        individual(
+          where: {
+            primary_identifier: {_eq: $primaryIdentifier}
+          }
+      ) {
+          phenopacket_id
+        }
+      }
+    `;
+    const variables = {
+      primaryIdentifier: nhsID,
+    };
+    const result = await graphql({ query, variables });
+    return result.data?.individual[0]?.phenopacket_id;
+  }
+
+  const updateExternalHPO = async function (phenopacketId, hpoTerms, linkedHpoTerms, linkedHpoIds) {
+    const query = `
+      mutation UpdatePhenotypicFeaturesViaPedigree(
+        $phenopacketId: uuid!,
+        $hpoTerms: [hpo_insert_input!]! = {},
+        $linkedHpoTerms: [phenotypic_feature_insert_input!]! = {},
+        $linkedHpoIds: [String!]! = ""
+      ) {
+        insert_hpo(
+          objects: $hpoTerms,
+          on_conflict: {
+            constraint: hpo_pkey,
+            update_columns: []
+          }
+        ) {
+          affected_rows
+        }
+        insert_phenotypic_feature(
+          objects: $linkedHpoTerms,
+          on_conflict: {
+            constraint: phenotypic_feature_hpo_id_phenopacket_id_key,
+            update_columns: []
+          }
+        ) {
+          affected_rows
+          returning {
+            hpo {
+              id
+              name
+            }
+          }
+        }
+        delete_phenotypic_feature(
+          where: {
+            hpo_id: {_nin: $linkedHpoIds},
+            _and: { phenopacket_id: {_eq: $phenopacketId} }
+          }
+        ) {
+          affected_rows
+        }
+      }
+    `;
+    const variables = {
+      phenopacketId: phenopacketId,
+      hpoTerms: hpoTerms,
+      linkedHpoTerms: linkedHpoTerms,
+      linkedHpoIds: linkedHpoIds,
+    };
+    const result = await graphql({ query, variables });
+    return result;
+  }
+
+  document.observe('pedigree:person:set:hpo', async (event) => {
+    var phenopacketId = await getPhenopacketID(event.memo.node.getExternalID());
+    var hpoTerms = [];
+    var linkedHpoTerms = [];
+    var linkedHpoIds = [];
+    var hpos = event.memo.value;
+    hpos.each( function (hpo) {
+      var hpoID = HPOTerm.desanitizeID(hpo.getID());
+      hpoTerms.push({ id: hpoID, name: hpo.getName() });
+      linkedHpoTerms.push({ phenopacket_id: phenopacketId, hpo_id: hpoID, presence: "PRESENT" });
+      linkedHpoIds.push(hpoID);
+    });
+    var result = await updateExternalHPO(phenopacketId, hpoTerms, linkedHpoTerms, linkedHpoIds);
   });
 });
 
