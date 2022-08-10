@@ -1,5 +1,6 @@
 import Disorder from 'pedigree/disorder';
 import HPOTerm from 'pedigree/hpoTerm';
+import Gene from 'pedigree/gene';
 import Helpers from 'pedigree/model/helpers';
 import GraphicHelpers from 'pedigree/view/graphicHelpers';
 import AgeCalc from 'pedigree/view/ageCalc';
@@ -126,31 +127,27 @@ var NodeMenu = Class.create({
               return '<div>' + escape(item.value) + '</div>';
             },
             option: function(item, escape) {
-              var div = '<div>' +
-                '<span class="title">' +
-                '<span class="ontologyId">' + 'ORPHA:' + escape(item.id) + '&nbsp;'.repeat(8 - item.id.toString().length) + '</span>' +
-                '<span class="name">' + escape(item.name) + '</span>';
-              if (item.synonym){
-                div += '<span class="synonym">(' + escape(item.synonym) + ')</span>';
-              }
-              div += '</span></div>';
+              var div = '<div><table>' +
+              '<tr><td><span class="id disorder">' + 'ORPHA:' + escape(item.id) + '</span></td>' +
+              '<td><span class="name">' + escape(item.name) + '</span></td></tr>';
+              div += '</table></div>';
               return div;
             },
           },
-					onInitialize: function() {
-						var _this = this
-						jQuery.ajax({
-							url: 'https://api.orphacode.org/EN/ClinicalEntity',
-							type: 'GET',
-							headers: {
+          onInitialize: function() {
+            var _this = this
+            jQuery.ajax({
+              url: 'https://api.orphacode.org/EN/ClinicalEntity',
+              type: 'GET',
+              headers: {
                 // ORPHA requires api key, but it can be anything.
-								'apikey': '5d29dd2f-8021-41e2-8146-3548d7ba409b'
-							},
-							async: false,
-							error: function() {
-								return;
-							},
-							success: function(res) {
+                'apikey': '5d29dd2f-8021-41e2-8146-3548d7ba409b'
+              },
+              async: false,
+              error: function() {
+                return;
+              },
+              success: function(res) {
                 res.forEach(function(item) {
                   var disorder = new Disorder(item['ORPHAcode'], item['Preferred term'])
                   item = {
@@ -158,12 +155,12 @@ var NodeMenu = Class.create({
                     name: disorder.getName(),
                     value: disorder.getDisplayName(),
                   }
-									_this.addOption(item);
-								});
-								_this.refreshOptions();
-							}
-						});
-					},
+                  _this.addOption(item);
+                });
+                _this.refreshOptions();
+              }
+            });
+          },
           onChange: function() {
             this.fieldName = 'disorders';
             document.fire('custom:selectize:changed', this);
@@ -226,6 +223,68 @@ var NodeMenu = Class.create({
     // genes
     this.form.select('input.suggest-genes').each(function(item) {
       if (!item.hasClassName('initialized')) {
+        jQuery(item).selectize({
+          maxItems: null,
+          valueField: 'value',
+          searchField: ['id', 'name'],
+          options: [],
+          /*
+          // Uncomment this function to enable custom gene input (i.e. genes without HGNC IDs).
+          create: function(input) {
+            var gene = new Gene(null, input);
+            return {'id': gene.getID(), 'name': gene.getSymbol(), 'value': gene.getDisplayName()};
+          },
+          */
+          maxOptions: 100,
+          delimiter: ',',
+          render: {
+            item: function(item, escape) {
+              return '<div>' + escape(item.value) + '</div>';
+            },
+            option: function(item, escape) {
+              var div = '<div><table>' +
+              '<tr><td><span class="id gene">' + escape(item.id) + '</span></td>' +
+              '<td><span class="name">' + escape(item.name) + '</span></td></tr>' + 
+              '<tr><td /><td><span class="italic">' + escape(item.group) + '</span></td></tr>';
+              div += '</table></div>';
+              return div;
+            },
+          },
+          onInitialize: function() {
+            var _this = this
+            jQuery.ajax({
+              url: 'https://ftp.ebi.ac.uk/pub/databases/genenames/hgnc/json/non_alt_loci_set.json',
+              type: 'GET',
+              headers: {
+                'Accept': 'application/json'
+              },
+              async: false,
+              error: function() {
+                console.log('ERROR: Failed to obtain HGNC genes from https://ftp.ebi.ac.uk.');
+                return;
+              },
+              success: function(res) {
+                res.response.docs.forEach(function(item) {
+                  var gene = new Gene(item.hgnc_id, item.symbol, item.locus_group);
+                  item = {
+                    id: gene.getID(),
+                    name: gene.getSymbol(),
+                    value: gene.getDisplayName(),
+                    group: gene.getGroup(),
+                  }
+                  _this.addOption(item);
+                });
+                _this.refreshOptions();
+              }
+            });
+          },
+          onChange: function() {
+            this.fieldName = 'candidate_genes';
+            document.fire('custom:selectize:changed', this);
+          },          
+        });
+        /*
+        // Code of the original Open Pedigree gene selector control.
         var geneServiceURL = new XWiki.Document('GeneNameService', 'PhenoTips').getURL('get', 'outputSyntax=plain');
         item._suggest = new PhenoTips.widgets.Suggest(item, {
           script: geneServiceURL + '&json=true&',
@@ -255,12 +314,18 @@ var NodeMenu = Class.create({
             'acceptFreeText' : true
           });
         }
+        */
+
         item.addClassName('initialized');
+
+        /*
+        // Code of the original Open Pedigree gene selector control.
         document.observe('ms:suggest:containerCreated', function(event) {
           if (event.memo && event.memo.suggest === item._suggest) {
             item._suggest.container.setStyle({'overflow': 'auto', 'maxHeight': document.viewport.getHeight() - item._suggest.container.cumulativeOffset().top + 'px'});
           }
         });
+        */
       }
     });
     // HPO terms
@@ -278,32 +343,33 @@ var NodeMenu = Class.create({
               return '<div>' + escape(item.value) + '</div>';
             },
             option: function(item, escape) {
-              var div = '<div>' +
-                '<span class="title">' +
-                '<span class="ontologyId">' + escape(item.id) + '</span>' +
-                '<span class="name">' + escape(item.name) + '</span>';
+              var div = '<div><table>' +
+              '<tr><td><span class="id hpo">' + escape(item.id) + '</span></td>' +
+              '<td><span class="name">' + escape(item.name) + '</span></td></tr>';
               if (item.synonym){
-                div += '<span class="synonym">(' + escape(item.synonym) + ')</span>'
+                '<tr><td /><td><span class="italic">' + escape(item.synonym) + '</span></td></tr>';
               }
-              div += '</span></div>';
+              div += '</table></div>';
               return div;
             },
           },
-          load: function(query, callback) {
-            if (!query.length) return callback();
+          onInitialize: function() {
+            var _this = this
             jQuery.ajax({
-              // Note that "max" url parameter sets the number of suggestions retireved form the HPO API (lower = less laggy).
-              url: 'https://hpo.jax.org/api/hpo/search/?q=' + encodeURIComponent(query) + '&max=25&offset=0&category=terms',
+              url: 'https://hpo.jax.org/api/hpo/search/?q=HP%3A&max=-1&offset=0&category=terms',
               type: 'GET',
+              async: false,
               error: function() {
-                callback();
+                console.log('ERROR: Failed to obtain HPO terms from hpo.jax.org/api.');
+                return;
               },
               success: function(res) {
                 res.terms.each(function(item){
                   var hpoTerm = new HPOTerm(item.id, item.name);
                   item.value = hpoTerm.getDisplayName();
-                })
-                callback(res.terms);
+                  _this.addOption(item);
+                });
+                _this.refreshOptions();
               }
             });
           },
@@ -311,7 +377,6 @@ var NodeMenu = Class.create({
             this.fieldName = 'hpo_positive';
             document.fire('custom:selectize:changed', this);
           },
-          
         });
         
         /*
@@ -656,23 +721,46 @@ var NodeMenu = Class.create({
       result.insert(genePicker);
       genePicker._getValue = function() {
         var results = [];
+        if (this.value) {
+          var genes = this.value.split(',');
+          genes.each(function(item){
+            results.push(new Gene(null, item));
+          })
+        }
+        /*
+        // Code of the original Open Pedigree gene selector control.
         var container = this.up('.field-box');
         if (container) {
           container.select('input[type=hidden][name=' + data.name + ']').each(function(item){
             results.push(item.next('.value') && item.next('.value').firstChild.nodeValue || item.value);
           });
         }
+        */
         return [results];
       }.bind(genePicker);
       // Forward the 'custom:selection:changed' to the input
       var _this = this;
+      /*
+      // Code of the original Open Pedigree gene selector control.
       document.observe('custom:selection:changed', function(event) {
         if (event.memo && event.memo.fieldName == data.name && event.memo.trigger && event.findElement() != event.memo.trigger && !event.memo.trigger._silent) {
           Event.fire(event.memo.trigger, 'custom:selection:changed');
           _this.reposition();
         }
       });
-      this._attachFieldEventListeners(genePicker, ['custom:selection:changed']);
+      */
+
+      document.observe('custom:selectize:changed', function(event) {
+        if (event.memo && event.memo.fieldName == data.name && event.memo.trigger && event.findElement() != event.memo.trigger && !event.memo.trigger._silent
+            && event.memo.$input) {
+          Event.fire(event.memo.$input[0], 'custom:selectize:changed');
+          _this.reposition();
+        }
+      });
+
+      // Code of the original Open Pedigree gene selector control.
+      //this._attachFieldEventListeners(genePicker, ['custom:selection:changed']);
+      this._attachFieldEventListeners(genePicker, ['custom:selectize:changed']);
       return result;
     },
     'select' : function (data) {
@@ -893,7 +981,7 @@ var NodeMenu = Class.create({
         if (values.length > 0) {
           values.each(function(v) {
             var hpoTerm = new HPOTerm(v.id, v.value);
-            target.selectize.addOption({value: hpoTerm.getDisplayName(), id: hpoTerm.getdDesanitizedID(), name: hpoTerm.getName()});
+            target.selectize.addOption({value: hpoTerm.getDisplayName(), id: hpoTerm.getDesanitizedID(), name: hpoTerm.getName()});
             target.selectize.addItem(hpoTerm.getDisplayName(), true);
           });
         }
@@ -915,6 +1003,23 @@ var NodeMenu = Class.create({
     'gene-picker' : function (container, values) {
       var _this = this;
       var target = container.down('input[type=text].suggest-genes');
+      if (target.selectize) {
+        if (values.length == 0) {
+          target.selectize.clear(true);
+        }
+        if (values.length > 0) {
+          values.each(function(v) {
+            var gene = new Gene(null, v);
+            // Candidate genes are stored in "{ID} | {Symbol}" (e.g. DisplayName) in person object, 
+            // but only symbols are used in gene legend.
+            target.selectize.addOption({value: gene.getDisplayName(), id: gene.getID(), name: gene.getSymbol(), group: gene.getGroup()});
+            target.selectize.addItem(gene.getDisplayName(), true);
+            _this._updateGeneColor(gene.getSymbol(), editor.getGeneLegend().getObjectColor(gene.getSymbol()));
+          });
+        }
+      }
+      /*
+      // Code of the original Open Pedigree gene selector control.
       if (target && target._suggestPicker) {
         target._silent = true;
         target._suggestPicker.clearAcceptedList();
@@ -926,6 +1031,7 @@ var NodeMenu = Class.create({
         }
         target._silent = false;
       }
+      */
     },
     'select' : function (container, value) {
       var target = container.down('select option[value=' + value + ']');
