@@ -83,6 +83,14 @@ document.observe('dom:loaded', async function () {
     autosave: true,
     backend: {
       load: async ({ onSuccess, onError }) => {
+        if (urlParams.has('specialty_id')) {
+          specialtyID = urlParams.get('specialty_id');
+        } else {
+          console.warn('No specialty ID has been specified. Individuals created in open-pedigree will not be viewable in Gen-O.');
+        }
+        if (DEV_MODE) {
+          specialtyID = '967e0a13-81aa-48f2-8bea-ce0111ddfc94';
+        }
         if (urlParams.has('phenopacket_id')) {
           const query = `
             query GetOpenPedigreeData($phenopacketId: uuid!) {
@@ -107,14 +115,6 @@ document.observe('dom:loaded', async function () {
           );
         } else {
           console.warn('No phenopacket ID has been specified. No data will be saved.')
-        }
-        if (urlParams.has('specialty_id')) {
-          specialtyID = urlParams.get('specialty_id');
-        } else {
-          console.warn('No specialty ID has been specified. Individuals created in open-pedigree will not be viewable in Gen-O.');
-        }
-        if (DEV_MODE) {
-          specialtyID = '967e0a13-81aa-48f2-8bea-ce0111ddfc94';
         }
       },
       save: async ({ jsonData, svgData, setSaveInProgress }) => {
