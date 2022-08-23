@@ -2,7 +2,6 @@ import Controller from 'pedigree/controller';
 import SaveLoadEngine from 'pedigree/saveLoadEngine';
 import View from 'pedigree/view';
 import DynamicPositionedGraph from 'pedigree/model/dynamicGraph';
-import Helpers from 'pedigree/model/helpers';
 import Workspace from 'pedigree/view/workspace';
 import DisorderLegend from 'pedigree/view/disorderLegend';
 import HPOLegend from 'pedigree/view/hpoLegend';
@@ -15,6 +14,7 @@ import TemplateSelector from 'pedigree/view/templateSelector';
 import ActionStack from 'pedigree/undoRedo';
 import VersionUpdater from 'pedigree/versionUpdater';
 import PedigreeEditorParameters from 'pedigree/pedigreeEditorParameters';
+import DefaultFhirTerminologyHelper from 'pedigree/DefaultFhirTerminologyHelper';
 
 import '../style/editor.css';
 
@@ -49,6 +49,9 @@ var PedigreeEditor = Class.create({
     // debugging functionality
     this.DEBUG_MODE = Boolean(options.DEBUG_MODE);
 
+    // Tabs to enable/disable
+    this.tabs = options.tabs || ['Personal', 'Clinical'];
+
     window.editor = this;
 
     // initialize main data structure which holds the graph structure
@@ -64,6 +67,7 @@ var PedigreeEditor = Class.create({
     this._disorderLegend = new DisorderLegend();
     this._geneLegend = new GeneLegend();
     this._hpoLegend = new HPOLegend();
+    this._fhirTerminologyHelper = options.fhirTerminologyHelper || new DefaultFhirTerminologyHelper();
 
     this._view = new View();
 
@@ -257,6 +261,10 @@ var PedigreeEditor = Class.create({
     return this._geneLegend;
   },
 
+  getFhirTerminologyHelper: function() {
+    return this._fhirTerminologyHelper;
+  },
+
   /**
      * @method getPaper
      * @return {Workspace.paper} Raphael paper element
@@ -361,6 +369,7 @@ var PedigreeEditor = Class.create({
       return null;
     }
     var _this = this;
+
     return new NodeMenu([
       {
         'name' : 'identifier',
@@ -517,6 +526,30 @@ var PedigreeEditor = Class.create({
         'function' : 'setLostContact'
       },
       {
+        'name' : 'createGenO',
+        'label' : 'Gen-O record',
+        'value' : 'Create',
+        'type' : 'button',
+        'tab': 'Personal',
+        'disabled' : true
+      },
+      {
+        'name' : 'updateGenO',
+        'label' : '<br>',
+        'value' : 'Update',
+        'type' : 'button',
+        'tab': 'Personal',
+        'disabled' : true
+      },
+      {
+        'name' : 'viewGenO',
+        'label' : ' <br>',
+        'value' : 'View',
+        'type' : 'button',
+        'tab': 'Personal',
+        'disabled' : true
+      },
+      {
         'name' : 'placeholder',
         'label' : 'Placeholder node',
         'type' : 'checkbox',
@@ -531,7 +564,9 @@ var PedigreeEditor = Class.create({
         'rows' : 2,
         'function' : 'setComments'
       }
-    ], ['Personal', 'Clinical']);
+    ].filter((item) => {
+      return this.tabs.indexOf(item.tab) !== -1
+    }), this.tabs)
   },
 
   /**

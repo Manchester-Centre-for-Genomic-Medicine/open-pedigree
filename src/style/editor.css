@@ -246,7 +246,7 @@
  */
 .menu-box {
   position: absolute;
-  width: 350px;
+  width: 450px;
   color: #000000;
   z-index: 100000;
 }
@@ -514,6 +514,18 @@
 .menu-box .field-adopted {
   padding: 0.26em 0;
 }
+.menu-box .field-createGenO {
+  width: 22%;
+  float: left;
+}
+.menu-box .field-updateGenO {
+  width: 22%;
+  float: left;
+}
+.menu-box .field-viewGenO {
+  width: 22%;
+  display: inline-block;
+}
 .menu-box .field-monozygotic {
   padding: 0.26em 0;
 }
@@ -562,8 +574,41 @@
 }
 
 /* ===========================================
+ * NODE MENU HPOS, DISORDERS, AND GENES SELECTOR (SELECTIZE.JS)
+ */
+
+.selectize-control .selectize-dropdown > div {
+  border-bottom: 1px solid rgba(0,0,0,0.05);
+}
+
+.selectize-control .selectize-dropdown .id {
+  font-weight: bold;
+  margin-left: 5px;
+}
+
+.selectize-control .selectize-dropdown .hpo {
+  width: 95px;
+  display: inline-block;
+}
+
+.selectize-control .selectize-dropdown .gene {
+  width: 100px;
+  display: inline-block;
+}
+
+.selectize-control .selectize-dropdown .disorder {
+  width: 115px;
+  display: inline-block;
+}
+
+.selectize-control .selectize-dropdown .italic {
+  font-style: italic;
+}
+
+/* ===========================================
  * NODE TYPE OPTIONS
  */
+
 .callout {
   position: absolute;
   width: auto;

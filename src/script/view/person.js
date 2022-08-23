@@ -4,6 +4,7 @@ import AbstractPerson from 'pedigree/view/abstractPerson';
 import PersonVisuals from 'pedigree/view/personVisuals';
 import HPOTerm from 'pedigree/hpoTerm';
 import Disorder from 'pedigree/disorder';
+import Gene from 'pedigree/gene';
 
 /**
  * Person is a class representing any AbstractPerson that has sufficient information to be
@@ -48,6 +49,7 @@ var Person = Class.create(AbstractPerson, {
     this._gestationAge = '';
     this._isAdopted = false;
     this._externalID = '';
+    this._phenopacketID = '';
     this._lifeStatus = 'alive';
     this._childlessStatus = null;
     this._carrierStatus = '';
@@ -134,8 +136,12 @@ var Person = Class.create(AbstractPerson, {
      * @method getExternalID
      * @return {String}
      */
-  getExternalID: function() {
-    return this._externalID;
+  getExternalID: function(noSpaceFormat = false) {
+    if (!(noSpaceFormat) && this.isNHSNumber(this._externalID)) {
+      return this._externalID.substring(0,3) + ' ' + this._externalID.substring(3,6) + ' ' + this._externalID.substring(6,10);
+    } else {
+      return this._externalID;
+    }
   },
 
   /**
@@ -145,10 +151,62 @@ var Person = Class.create(AbstractPerson, {
      * @param externalID
      */
   setExternalID: function(externalID) {
-    this._externalID = externalID;
+    if (this.isNHSNumber(externalID)) {
+      this._externalID = externalID.replaceAll(' ', '');
+    } else {
+      this._externalID = externalID;
+    }
     this.getGraphics().updateExternalIDLabel();
   },
 
+  isNHSNumber: function (externalID) {
+    var isValid = true;
+    if (externalID.includes(' ')) {
+      var part_lengths = [];
+      var parts = externalID.split(' ');
+      parts.each(function(part){
+        part_lengths.push(part.length);
+        var num_part = Number(part);
+        if (!(Number.isInteger(num_part) && num_part > 0)) {
+          isValid = false;
+        }
+      });
+      if (part_lengths.length === 3) {
+        if (!(part_lengths[0] === 3 && part_lengths[1] === 3 && part_lengths[2] === 4)) {
+          isValid = false;
+        }
+      } else {
+        isValid = false;
+      }
+    } else {
+      var idNum = Number(externalID);
+      if (!(Number.isInteger(idNum) && externalID.length === 10)) {
+        isValid = false;
+      }
+    }
+    return isValid;
+  },
+
+  /**
+   * Returns the Gen-O Phenopacket ID of this Person
+   *
+   * @method getPhenopacketID
+   * @return {String}
+   */
+  getPhenopacketID: function() {
+    return this._phenopacketID;
+  },
+
+  /**
+     * Replaces the Phenopacket ID of this Person with the given ID
+     *
+     * @method setPhenopacketID
+     * @param phenopacketID
+     */
+   setPhenopacketID: function(phenopacketID) {
+    this._phenopacketID = phenopacketID;
+  },
+  
   /**
      * Replaces free-form comments associated with the node and redraws the label
      *
@@ -486,8 +544,10 @@ var Person = Class.create(AbstractPerson, {
     for (var i = 0; i < this.getDisorders().length; i++) {
       result.push(editor.getDisorderLegend().getObjectColor(this.getDisorders()[i]));
     }
-    for (var i = 0; i < this.getGenes().length; i++) {
-      result.push(editor.getGeneLegend().getObjectColor(this.getGenes()[i]));
+    // Candidate genes are stored in "{ID} | {Symbol}" (e.g. DisplayName) in person object, 
+    // but only symbols are used in gene legend.
+    for (var i = 0; i < this.getGeneSymbols().length; i++) {
+      result.push(editor.getGeneLegend().getObjectColor(this.getGeneSymbols()[i]));
     }
     return result;
   },
@@ -660,9 +720,14 @@ var Person = Class.create(AbstractPerson, {
      * @method addGenes
      */
   addGene: function(gene) {
-    if (this.getGenes().indexOf(gene) == -1) {
-      editor.getGeneLegend().addCase(gene, gene, this.getID());
-      this.getGenes().push(gene);
+    if (typeof gene != 'object'){
+      gene = new Gene(null, gene);
+    }
+    if (this.getGenes().indexOf(gene.getDisplayName()) == -1) {
+      // Candidate genes are stored in "{ID} | {Symbol}" (e.g. DisplayName) in person object, 
+      // but only symbols are used in gene legend.
+      editor.getGeneLegend().addCase(gene.getSymbol(), gene.getSymbol(), this.getID());
+      this.getGenes().push(gene.getDisplayName());
     }
   },
 
@@ -672,9 +737,14 @@ var Person = Class.create(AbstractPerson, {
      * @method removeGene
      */
   removeGene: function(gene) {
-    if (this.getGenes().indexOf(gene) !== -1) {
-      editor.getGeneLegend().removeCase(gene, this.getID());
-      this._candidateGenes = this.getGenes().without(gene);
+    if (typeof gene != 'object'){
+      gene = new Gene(null, gene);
+    }
+    if (this.getGenes().indexOf(gene.getDisplayName()) !== -1) {
+      // Candidate genes are stored in "{ID} | {Symbol}" (e.g. DisplayName) in person object, 
+      // but only symbols are used in gene legend.
+      editor.getGeneLegend().removeCase(gene.getSymbol(), this.getID());
+      this._candidateGenes = this.getGenes().without(gene.getDisplayName());
     }
   },
 
@@ -695,13 +765,28 @@ var Person = Class.create(AbstractPerson, {
   },
 
   /**
-     * Returns a list of candidate genes for this person.
+     * Returns a list of candidate genes for this person in "{ID} | {SYMBOL}" format.
      *
      * @method getGenes
      * @return {Array} List of gene names.
      */
   getGenes: function() {
     return this._candidateGenes;
+  },
+
+  /**
+   * Returns a list of candidate gene symbols for this person.
+   *
+   * @method getGenes
+   * @return {Array} List of gene names.
+   */
+  getGeneSymbols: function() {
+    var result = [];
+    this._candidateGenes.each(function(gene) {
+      gene = new Gene(null, gene);
+      result.push(gene.getSymbol());
+    });
+    return result;
   },
 
   /**
@@ -817,6 +902,7 @@ var Person = Class.create(AbstractPerson, {
       first_name:    {value : this.getFirstName()},
       last_name:     {value : this.getLastName()},
       external_id:   {value : this.getExternalID()},
+      phenopacket_id: {value : this.getPhenopacketID()}, 
       gender:        {value : this.getGender(), inactive: inactiveGenders},
       date_of_birth: {value : this.getBirthDate(), inactive: this.isFetus()},
       carrier:       {value : this.getCarrierStatus(), disabled: inactiveCarriers},

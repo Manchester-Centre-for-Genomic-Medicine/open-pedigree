@@ -37,7 +37,7 @@ var AbstractPerson = Class.create(AbstractNode, {
   },
 
   /**
-     * Reads a string of input and converts it into the standard gender format of "M","F" or "U".
+     * Reads a string (male/female) of input and converts it into the standard gender format of "M","F" or "U".
      * Defaults to "U" if string is not recognized
      *
      * @method parseGender
@@ -45,16 +45,30 @@ var AbstractPerson = Class.create(AbstractNode, {
      * @return {String} the gender in the standard form ("M", "F", or "U")
      */
   parseGender: function(gender) {
+    if (gender.toUpperCase() == 'MALE') {
+      gender = 'M';
+    } else if (gender.toUpperCase() == 'FEMALE') {
+      gender = 'F';
+    }
     return (gender.toUpperCase() == 'M' || gender.toUpperCase() == 'F') ? gender.toUpperCase() : 'U';
   },
 
   /**
-     * Returns "U", "F" or "M" depending on the gender of this node
+     * Returns "U", "F" or "M" depending on the gender of this node or full notation.
      *
      * @method getGender
+     * @param {Boolean} fullNotation If true, returns 'Male', 'Female', and 'Unknown' instead of 'M', 'F', and 'U', respectively.
      * @return {String}
      */
-  getGender: function() {
+  getGender: function(fullNotation = false) {
+    if (fullNotation) {
+      var shortToFull = {
+        'M' : 'Male',
+        'F' : 'Female',
+        'U' : 'Unknown',
+      };
+      return shortToFull[this._gender];
+    }
     return this._gender;
   },
 
