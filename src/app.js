@@ -15,6 +15,11 @@ import '../public/vendor/phenotips/Skin.css';
 
 import HPOTerm from 'pedigree/hpoTerm';
 
+// Global variable, obtained from URL parameters when opened from Gen-O.
+var specialtyID = null;
+// IMPORTANT! Don't forget to change to false before commiting to github!
+var DEV_MODE = false;
+
 document.observe('dom:loaded', async function () {
   let auth0 = null;
   const configureAuth0 = async () => {
@@ -91,6 +96,14 @@ document.observe('dom:loaded', async function () {
         } else {
           console.warn('No phenopacket ID has been specified. No data will be saved.')
         }
+        if (urlParams.has('specialty_id')) {
+          specialtyID = urlParams.get('specialty_id');
+        } else {
+          console.warn('No specialty ID has been specified. Individuals created in open-pedigree will not be viewable in Gen-O.');
+        }
+        if (DEV_MODE) {
+          specialtyID = '967e0a13-81aa-48f2-8bea-ce0111ddfc94';
+        }
       },
       save: async ({ jsonData, svgData, setSaveInProgress }) => {
         //setSaveInProgress(true);
@@ -143,6 +156,7 @@ document.observe('dom:loaded', async function () {
           last_name
           primary_identifier
           sex
+          phenopacket_id
           phenopacket {
             phenotypic_features(where:{presence: {_eq: "PRESENT"}}) {
               hpo {
@@ -195,63 +209,83 @@ document.observe('dom:loaded', async function () {
     node.setGender('U');
     node.setHPO([]);
     node.setGenes([]);
-    node.setDisorders([]);    
+    node.setDisorders([]);
+  }
+
+  function disableGenOButtons(create, update, view, refreshNodeMenu) {
+    editor.getNodeMenu().fieldMap['createGenO'].disabled = create;
+    editor.getNodeMenu().fieldMap['updateGenO'].disabled = update;
+    editor.getNodeMenu().fieldMap['viewGenO'].disabled = view;
+    if (refreshNodeMenu) {
+      editor.getNodeMenu().update();
+    }
   }
 
   // hook externalid up to the gen-o database
   document.observe('pedigree:person:set:externalid', async (event) => {
-    var result = await getDemographicsGenO(event.memo.value);
-    if (result.data?.individual[0]) {
-      clearNodeDemographics(event.memo.node);
-      event.memo.node.setFirstName(
-        result.data?.individual[0]?.first_name
-      );
-      event.memo.node.setLastName(
-        result.data?.individual[0]?.last_name
-      );
-      event.memo.node.setLifeStatus(
-        result.data?.individual[0]?.deceased
-          ? 'deceased'
-          : 'alive'
-      );
-      event.memo.node.setBirthDate(
-        new Date(result.data?.individual[0]?.date_of_birth)
-      );
-      event.memo.node.setDeathDate(
-        new Date(result.data?.individual[0]?.date_of_death)
-      );
-      event.memo.node.setGender(
-        result.data?.individual[0]?.sex
-      );
-      var hpos = [];
-      result.data?.individual[0]?.phenopacket?.phenotypic_features?.each(function(v) {
-        hpos.push(new HPOTerm(v.hpo.id, v.hpo.name));
-      });
-      event.memo.node.setHPO(hpos);
-    } else {
-      var result = await getDemographicsPDS(event.memo.value);
-      if (result.data?.individual) {
+    event.memo.node.setPhenopacketID('');
+    if(event.memo.node.isNHSNumber(event.memo.value)) {
+      var nhsID = event.memo.value.replaceAll(' ', '');
+      var result = await getDemographicsGenO(nhsID);
+      if (result.data?.individual[0]) {
         clearNodeDemographics(event.memo.node);
-        var names = result.data.individual.name.sort(function(a, b) {
-          return new Date(b.period.start) - new Date(a.period.start);
-        });
-        event.memo.node.setFirstName(names[0]?.given[0]);
-        event.memo.node.setLastName(names[0]?.family);
+        event.memo.node.setFirstName(
+          result.data?.individual[0]?.first_name
+        );
+        event.memo.node.setLastName(
+          result.data?.individual[0]?.last_name
+        );
+        event.memo.node.setPhenopacketID(
+          result.data?.individual[0]?.phenopacket_id
+        );
         event.memo.node.setLifeStatus(
-          result.data.individual?.deceased
+          result.data?.individual[0]?.deceased
             ? 'deceased'
             : 'alive'
         );
         event.memo.node.setBirthDate(
-          new Date(result.data.individual?.birthDate)
+          new Date(result.data?.individual[0]?.date_of_birth)
         );
         event.memo.node.setDeathDate(
-          new Date(result.data.individual?.deceasedDateTime)
+          new Date(result.data?.individual[0]?.date_of_death)
         );
-        event.memo.node.setGender(result.data.individual.gender);
+        event.memo.node.setGender(
+          result.data?.individual[0]?.sex
+        );
+        var hpos = [];
+        result.data?.individual[0]?.phenopacket?.phenotypic_features?.each(function(v) {
+          hpos.push(new HPOTerm(v.hpo.id, v.hpo.name));
+        });
+        event.memo.node.setHPO(hpos);
+        disableGenOButtons(true, false, false, false);
+      } else {
+        var result = await getDemographicsPDS(nhsID);
+        if (result.data?.individual) {
+          clearNodeDemographics(event.memo.node);
+          var names = result.data.individual.name.sort(function(a, b) {
+            return new Date(b.period.start) - new Date(a.period.start);
+          });
+          event.memo.node.setFirstName(names[0]?.given[0]);
+          event.memo.node.setLastName(names[0]?.family);
+          event.memo.node.setLifeStatus(
+            result.data.individual?.deceased
+              ? 'deceased'
+              : 'alive'
+          );
+          event.memo.node.setBirthDate(
+            new Date(result.data.individual?.birthDate)
+          );
+          event.memo.node.setDeathDate(
+            new Date(result.data.individual?.deceasedDateTime)
+          );
+          event.memo.node.setGender(result.data.individual.gender);
+        }
+        disableGenOButtons(false, true, true, false);
       }
+      editor.getNodeMenu().update();
+    } else {
+      disableGenOButtons(true, true, true, false);
     }
-    editor.getNodeMenu().update();
   });
 
   const getPhenopacketID = async function (nhsID) {
@@ -275,7 +309,17 @@ document.observe('dom:loaded', async function () {
     return result.data?.individual[0]?.phenopacket_id;
   }
 
-  const updateExternalHPO = async function (phenopacketId, hpoTerms, linkedHpoTerms, linkedHpoIds) {
+  const updateExternalHPO = async function (phenopacketId, hpos) {
+    var hpoTerms = [];
+    var linkedHpoTerms = [];
+    var linkedHpoIds = [];
+    hpos.each( function (hpo) {
+      var hpoID = HPOTerm.desanitizeID(hpo.getID());
+      hpoTerms.push({ id: hpoID, name: hpo.getName() });
+      linkedHpoTerms.push({ phenopacket_id: phenopacketId, hpo_id: hpoID, presence: "PRESENT" });
+      linkedHpoIds.push(hpoID);
+    });
+
     const query = `
       mutation UpdatePhenotypicFeaturesViaPedigree(
         $phenopacketId: uuid!,
@@ -328,18 +372,256 @@ document.observe('dom:loaded', async function () {
   }
 
   document.observe('pedigree:person:set:hpo', async (event) => {
-    var phenopacketId = await getPhenopacketID(event.memo.node.getExternalID());
-    var hpoTerms = [];
-    var linkedHpoTerms = [];
-    var linkedHpoIds = [];
-    var hpos = event.memo.value;
-    hpos.each( function (hpo) {
-      var hpoID = HPOTerm.desanitizeID(hpo.getID());
-      hpoTerms.push({ id: hpoID, name: hpo.getName() });
-      linkedHpoTerms.push({ phenopacket_id: phenopacketId, hpo_id: hpoID, presence: "PRESENT" });
-      linkedHpoIds.push(hpoID);
-    });
-    var result = await updateExternalHPO(phenopacketId, hpoTerms, linkedHpoTerms, linkedHpoIds);
+    var result = await updateExternalHPO(event.memo.node.getPhenopacketID(), event.memo.value);
+  });
+
+  const insertPhenopacket = async function () {
+    const query = `
+      mutation InsertPhenopacket {
+        phenopacket:insert_phenopacket_one(
+          object: {}
+        ) {
+          id
+        }
+      }
+    `;
+    const result = await graphql({ query });
+    return result.data?.phenopacket?.id;
+  }
+
+  const insertInterpretation = async function (phenopacketID) {
+    const query = `
+      mutation InsertInterpretation(
+        $phenopacket_id: uuid!,
+        $specialty_id: uuid!
+      ) {
+        interpretation:insert_interpretation_one(
+          object: 
+            {
+              phenopacket_id: $phenopacket_id,
+              specialty_id: $specialty_id
+            }
+        ) {
+            id
+        }
+      }
+    `;
+    const variables = {
+      phenopacket_id: phenopacketID,
+      specialty_id: specialtyID
+    };
+    const result = await graphql({ query, variables });
+    return result.data?.interpretation?.id;
+  }
+
+  const insertCaseHistory = async function (phenopacketID, status="Referred", notes="Added via Open Pedigree") {
+    var query = `
+      query GetCaseStatus($status: String! = "Referred") {
+        case_status(where: {status: {_eq: $status}}) {
+          id
+        }
+      }
+    `;
+    var variables = {
+      status: status
+    }
+    var result = await graphql({ query, variables });
+    var case_status_id = result.data?.case_status[0]?.id;
+    query = `
+      mutation AddCaseStatus(
+        $phenopacket_id: uuid!,
+        $case_status_id: uuid!,
+        $notes: String
+      ) {
+        case_history:insert_case_history_one(
+          object: {
+            phenopacket_id: $phenopacket_id,
+            case_status_id: $case_status_id,
+            notes: $notes,
+          }
+        ) {
+          id
+        }
+      }
+    `;
+    variables = {
+      phenopacket_id: phenopacketID,
+      case_status_id: case_status_id,
+      notes: notes
+    };
+    result = await graphql({ query, variables });
+    return result.data?.case_history?.id;
+  }
+
+  const upsertIndividual = async function (node) {
+    const query = `
+      mutation UpsertIndividual(
+        $primary_identifier: String!,
+        $phenopacket_id: uuid!,
+        $first_name: String,
+        $last_name: String,
+        $deceased: Boolean,
+        $date_of_birth: date,
+        $date_of_death: date,
+        $sex: sex
+      ) {
+        individual:insert_individual_one(
+          object: {
+            primary_identifier: $primary_identifier,
+            phenopacket_id: $phenopacket_id,
+            first_name: $first_name,
+            last_name: $last_name,
+            deceased: $deceased,
+            date_of_birth: $date_of_birth,
+            date_of_death: $date_of_death,
+            sex: $sex
+          },
+          on_conflict: {
+            constraint: individual_primary_identifier_key,
+            update_columns: [
+              first_name,
+              last_name,
+              deceased,
+              date_of_birth,
+              date_of_death,
+              sex
+            ]
+          }
+        ) {
+            id
+          }
+        }
+      `;
+
+    const variables = {
+      primary_identifier: node.getExternalID(true),
+      phenopacket_id: node.getPhenopacketID(),
+      first_name: node.getFirstName(),
+      last_name: node.getLastName(),
+      deceased: node.getLifeStatus() == 'deceased' ? true : false,
+      date_of_birth: node.getBirthDate() ? node.getBirthDate() : null,
+      date_of_death: node.getDeathDate() ? node.getDeathDate() : null,
+      sex: node.getGender(true)
+    }
+    const result = await graphql({ query, variables });
+    return result.data?.individual?.id;
+  }
+
+  document.observe('pedigree:person:createGenO', async function(event) {
+    var node = event.memo.node;    
+    if(event.memo.node.isNHSNumber(event.memo.node.getExternalID())) {
+      var phenopacketID = await insertPhenopacket();
+      node.setPhenopacketID(phenopacketID);
+      var individualID = await upsertIndividual(node);
+      var interpretationID = await insertInterpretation(phenopacketID);
+      var caseStetusID = await insertCaseHistory(phenopacketID);
+      var hpoResult = await updateExternalHPO(phenopacketID, node.getHPO());
+      if (phenopacketID && individualID && interpretationID && caseStetusID) {
+        console.log('Gen-O patient record was successfully created');
+      } else {
+        console.log('Failed to create Gen-O record patient record.');
+        console.log('phenopacketID:', phenopacketID);
+        console.log('individualID:', individualID);
+        console.log('interpretationID:', interpretationID);
+        console.log('caseStetusID:', caseStetusID);
+      }
+      disableGenOButtons(true, false, false, true);      
+    } else {
+      alert(`The extrnal ID '${event.memo.node.getExternalID()}' is not a 10-digit NHS number written as XXXXXXXXXX or XXX XXX XXXX.`);
+    }
+  });
+  
+  document.observe('pedigree:person:updateGenO', async function(event) {
+    var nhsID = event.memo.node.getExternalID(true);
+    var result = await getDemographicsGenO(nhsID);
+    var changedFields = [];
+    if (result.data?.individual[0]?.first_name != event.memo.node.getFirstName()) {
+      changedFields.push([
+        'First name', 
+        result.data?.individual[0]?.first_name, 
+        event.memo.node.getFirstName()
+      ]);
+    }
+    if (result.data?.individual[0]?.last_name != event.memo.node.getLastName()) {
+      changedFields.push([
+        'Last name', 
+        result.data?.individual[0]?.last_name, 
+        event.memo.node.getLastName()
+      ]);
+    }
+    if (result.data?.individual[0]?.deceased != event.memo.node.getLifeStatus() == 'deceased') {
+      changedFields.push([
+        'Life status', 
+        result.data?.individual[0]?.deceased ? 'deceased' : 'alive', 
+        event.memo.node.getLifeStatus()
+      ]);
+    }
+    if (event.memo.node.getBirthDate()) {
+      var newBirthDate = event.memo.node.getBirthDate().toISOString().split('T')[0];
+    } else {
+      var newBirthDate = null;
+    }
+    if (result.data?.individual[0]?.date_of_birth != newBirthDate) {
+      changedFields.push([
+        'Date of birth', 
+        result.data?.individual[0]?.date_of_birth, 
+        newBirthDate
+      ]);
+    }
+    if (event.memo.node.getDeathDate()) {
+      var newDeathDate = event.memo.node.getDeathDate().toISOString().split('T')[0];
+    } else {
+      var newDeathDate = null;
+    }
+    if (result.data?.individual[0]?.date_of_death != newDeathDate) {
+      changedFields.push([
+        'Date of death', 
+        result.data?.individual[0]?.date_of_death, 
+        newDeathDate
+      ]);
+    }
+    if (result.data?.individual[0]?.sex != event.memo.node.getGender(true)) {
+      changedFields.push([
+        'Gender', 
+        result.data?.individual[0]?.sex, 
+        event.memo.node.getGender(true)
+      ]);
+    }
+
+    if (changedFields.length == 0) {
+      alert("Nothing to update, the patient's demographics data in Gen-O is the same.");
+    } else {
+      var updateSummary = `You are going to submit the following changes of the patient's (NHS number: ${nhsID}) demographics data into Gen-O:\n`;
+      changedFields.each( function (changedField) {
+        updateSummary += `${changedField[0]}: ${changedField[1]} -> ${changedField[2]}\n`
+      });
+      updateSummary += `Note that any changes of the HPO terms are synchronised automatically (and consequently not listed here),`;
+      updateSummary += ` whereas associated disorders and genes are currently not saved in Gen-O.\n`;
+      updateSummary += `Please press OK to confirm the changes.`;
+      let confirmAction = confirm(updateSummary);
+      if (confirmAction) {
+        upsertIndividual(event.memo.node);
+        alert("Gen-O patient demographics data was updated.");
+      } else {
+        alert("Gen-O patient demographics data was not updated.");
+      }
+    }
+  });
+
+  document.observe('pedigree:person:viewGenO', function(event) {
+    window.open(`https://test-gen-o.northwestglh.com/patients/${event.memo.node.getPhenopacketID()}`, '_blank').focus();
+  });
+
+  document.observe('pedigree:node:refresh-gen-o-buttons-status', function(event) {
+    if(event.memo.node.isNHSNumber(event.memo.node.getExternalID())) {
+      if (event.memo.node.getPhenopacketID()) {
+        disableGenOButtons(true, false, false, true);
+      } else {
+        disableGenOButtons(false, true, true, true);
+      }
+    } else {
+      disableGenOButtons(true, true, true, true);
+    }
   });
 });
 

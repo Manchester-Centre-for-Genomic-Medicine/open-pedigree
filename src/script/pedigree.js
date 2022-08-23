@@ -526,6 +526,30 @@ var PedigreeEditor = Class.create({
         'function' : 'setLostContact'
       },
       {
+        'name' : 'createGenO',
+        'label' : 'Gen-O record',
+        'value' : 'Create',
+        'type' : 'button',
+        'tab': 'Personal',
+        'disabled' : true
+      },
+      {
+        'name' : 'updateGenO',
+        'label' : '<br>',
+        'value' : 'Update',
+        'type' : 'button',
+        'tab': 'Personal',
+        'disabled' : true
+      },
+      {
+        'name' : 'viewGenO',
+        'label' : ' <br>',
+        'value' : 'View',
+        'type' : 'button',
+        'tab': 'Personal',
+        'disabled' : true
+      },
+      {
         'name' : 'placeholder',
         'label' : 'Placeholder node',
         'type' : 'checkbox',
