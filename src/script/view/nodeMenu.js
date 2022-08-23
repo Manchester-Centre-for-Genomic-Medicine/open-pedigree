@@ -496,7 +496,8 @@ var NodeMenu = Class.create({
       'default' : data['default'] || '',
       'crtValue' : data['default'] || '',
       'function' : data['function'],
-      'inactive' : false
+      'inactive' : false,
+      'disabled' : data['disabled']
     };
     return result;
   },
@@ -531,6 +532,23 @@ var NodeMenu = Class.create({
           document.fire('pedigree:node:modify', event);
         }
         field.fire('pedigree:change');
+      });
+    });
+  },
+
+  _attachButtonEventListeners : function (button, eventNames) {
+    var _this = this;
+    eventNames.each(function(eventName) {
+      button.observe(eventName, function(event) {
+        if (_this._updating) {
+          return;
+        } // otherwise a button change triggers an update which triggers button change etc
+        var target = _this.targetNode;
+        if (!target) {
+          return;
+        }
+        var event = { 'nodeID': target.getID(), 'action': button.down('input[type=button]').name };
+        document.fire('pedigree:node:buttonaction', event);
       });
     });
   },
@@ -577,6 +595,16 @@ var NodeMenu = Class.create({
         return [this.checked];
       }.bind(checkbox);
       this._attachFieldEventListeners(checkbox, ['click']);
+      return result;
+    },
+    'button' : function (data) {
+      var result = this._generateEmptyField(data);
+      var button = Element('input', {type: 'button', name : data.name,  value: data.value, 'class' : 'button'}).wrap('span', {'class' : 'buttonwrapper'});
+      result.inputsContainer.insert(button);
+      button._getValue = function() {
+        return [this.value];
+      }.bind(button);
+      this._attachButtonEventListeners(button, ['click']);
       return result;
     },
     'text' : function (data) {
@@ -798,6 +826,8 @@ var NodeMenu = Class.create({
   },
 
   show : function(node, x, y) {
+    // Trigger event to update Gen-O buttons enable/disable status.
+    document.fire('pedigree:node:showmenu', { 'node': node });
     this._onscreen = true;
     this.targetNode = node;
     this._setCrtData(node.getSummary());
@@ -920,6 +950,17 @@ var NodeMenu = Class.create({
       if (checkbox) {
         checkbox.checked = value;
       }
+    },
+    'button' : function (container, value) {
+      // This code has some bug and does not set button text (value),
+      // but this functionality is currently not needed.
+      /*
+      var button = container.down('input[type=button]');
+      console.log('_setCrtData', button, value)
+      if (button) {
+        button.value = value;
+      }
+      */
     },
     'text' : function (container, value) {
       var target = container.down('input[type=text]');
@@ -1079,6 +1120,9 @@ var NodeMenu = Class.create({
     'checkbox' : function (container, inactive) {
       this._toggleFieldVisibility(container, inactive);
     },
+    'button' : function (container, inactive) {
+      this._toggleFieldVisibility(container, inactive);
+    },
     'text' : function (container, inactive) {
       this._toggleFieldVisibility(container, inactive);
     },
@@ -1131,6 +1175,12 @@ var NodeMenu = Class.create({
       var target = container.down('input[type=text]');
       if (target) {
         target.disabled = disabled;
+      }
+    },
+    'button' : function (container, disabled) {
+      var target = container.down('input[type=button]');
+      if (target) {
+        target.disabled  = disabled;
       }
     },
     'textarea' : function (container, inactive) {
