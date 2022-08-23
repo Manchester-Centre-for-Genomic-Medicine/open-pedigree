@@ -16,6 +16,8 @@ var Controller = Class.create({
     document.observe('pedigree:node:remove',               this.handleRemove);
     document.observe('pedigree:node:setproperty',          this.handleSetProperty);
     document.observe('pedigree:node:modify',               this.handleModification);
+    document.observe('pedigree:node:buttonaction',         this.handleButtonAction);
+    document.observe('pedigree:node:showmenu',             this.handleShowMenu);
     document.observe('pedigree:person:drag:newparent',     this.handlePersonDragToNewParent);
     document.observe('pedigree:person:drag:newpartner',    this.handlePersonDragToNewPartner);
     document.observe('pedigree:person:drag:newsibling',    this.handlePersonDragToNewSibling);
@@ -93,6 +95,20 @@ var Controller = Class.create({
     } else {
       unhighlightSelected();
     }
+  },
+
+  handleButtonAction: function(event) {
+    var node = editor.getView().getNode(event.memo.nodeID);
+    document.fire(`pedigree:person:${event.memo.action}`, {
+      'node': node
+    });
+  },
+
+  handleShowMenu: function(event) {
+    console.log('handleShowMenu', event)
+    document.fire(`pedigree:node:refresh-gen-o-buttons-status`, {
+      'node': event.memo.node
+    });    
   },
 
   handleSetProperty: function(event) {

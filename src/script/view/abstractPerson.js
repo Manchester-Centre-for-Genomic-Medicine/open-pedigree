@@ -54,12 +54,21 @@ var AbstractPerson = Class.create(AbstractNode, {
   },
 
   /**
-     * Returns "U", "F" or "M" depending on the gender of this node
+     * Returns "U", "F" or "M" depending on the gender of this node or full notation.
      *
      * @method getGender
+     * @param {Boolean} fullNotation If true, returns 'Male', 'Female', and 'Unknown' instead of 'M', 'F', and 'U', respectively.
      * @return {String}
      */
-  getGender: function() {
+  getGender: function(fullNotation = false) {
+    if (fullNotation) {
+      var shortToFull = {
+        'M' : 'Male',
+        'F' : 'Female',
+        'U' : 'Unknown',
+      };
+      return shortToFull[this._gender];
+    }
     return this._gender;
   },
 

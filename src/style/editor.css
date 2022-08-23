@@ -514,6 +514,18 @@
 .menu-box .field-adopted {
   padding: 0.26em 0;
 }
+.menu-box .field-createGenO {
+  width: 22%;
+  float: left;
+}
+.menu-box .field-updateGenO {
+  width: 22%;
+  float: left;
+}
+.menu-box .field-viewGenO {
+  width: 22%;
+  display: inline-block;
+}
 .menu-box .field-monozygotic {
   padding: 0.26em 0;
 }
