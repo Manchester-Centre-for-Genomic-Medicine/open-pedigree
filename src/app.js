@@ -20,8 +20,8 @@ var specialtyID = null;
 // IMPORTANT! Don't forget to change to false before commiting to github!
 var DEV_MODE = false;
 
-// Expected to be LIVE, TEST, or DEVELOP. Anything else is considered DEVELOP
-const GEN_O_VERSION = 'DEVELOP';
+// Expected to be LIVE, TEST, DEVELOP, or LOCAL. Anything else is considered LOCAL
+const GEN_O_VERSION = 'LOCAL';
 
 if (GEN_O_VERSION == 'LIVE') {
   var gen_o_domain = "gen-o.eu.auth0.com";
@@ -33,11 +33,16 @@ if (GEN_O_VERSION == 'LIVE') {
   var gen_o_client_id = "Kx350GeJFnWb1mYc5H3GjMvG8hrc2OYR";
   var gen_o_audience = "https://gen-o-test.eu.auth0.com/api/v2/";
   var gen_o_graphql = "https://test-graphql.northwestglh.com/v1/graphql";
-} else {
+} else if (GEN_O_VERSION == 'DEVELOP') {
   var gen_o_domain = "gen-o-dev.eu.auth0.com";
   var gen_o_client_id = "d3YJUQgU53bhu4O7nhPtFnXM4LjNUb6U";
   var gen_o_audience = "https://gen-o-dev.eu.auth0.com/api/v2/";
   var gen_o_graphql = "https://develop-graphql.northwestglh.com/v1/graphql";
+} else {
+  var gen_o_domain = "gen-o-dev.eu.auth0.com";
+  var gen_o_client_id = "d3YJUQgU53bhu4O7nhPtFnXM4LjNUb6U";
+  var gen_o_audience = "https://gen-o-dev.eu.auth0.com/api/v2/";
+  var gen_o_graphql = "http://localhost:4100/v1/graphql";
 }
 
 document.observe('dom:loaded', async function () {
