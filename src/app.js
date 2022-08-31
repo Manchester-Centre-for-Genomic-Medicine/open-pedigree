@@ -255,8 +255,10 @@ document.observe('dom:loaded', async function () {
             ? 'deceased'
             : 'alive'
         );
-        node.setBirthDate(new Date(result.data?.individual[0]?.date_of_birth));
-        node.setDeathDate(new Date(result.data?.individual[0]?.date_of_death));
+        var parsedBirthDate = new Date(result.data?.individual[0]?.date_of_birth);
+        node.setBirthDate(parsedBirthDate.toDateString());
+        var parsedDeathDate = new Date(result.data?.individual[0]?.date_of_death);
+        node.setDeathDate(parsedDeathDate.toDateString());
         node.setGender(result.data?.individual[0]?.sex);
         var hpos = [];
         result.data?.individual[0]?.phenopacket?.phenotypic_features?.each(function(v) {
@@ -278,12 +280,15 @@ document.observe('dom:loaded', async function () {
               ? 'deceased'
               : 'alive'
           );
-          node.setBirthDate(new Date(result.data.individual?.birthDate));
-          node.setDeathDate(new Date(result.data.individual?.deceasedDateTime));
+          var parsedBirthDate = new Date(result.data.individual?.birthDate);
+          node.setBirthDate(parsedBirthDate.toDateString());
+          var parsedDeathDate = new Date(result.data.individual?.deceasedDateTime);
+          node.setDeathDate(parsedDeathDate.toDateString());
           node.setGender(result.data.individual.gender);
         }
         disableGenOButtons(false, true, true, false);
       }
+      editor.getGraph().setProperties(node.getID(), node.getProperties());
       editor.getNodeMenu().update();
     } else {
       disableGenOButtons(true, true, true, false);
@@ -506,8 +511,8 @@ document.observe('dom:loaded', async function () {
       first_name: node.getFirstName(),
       last_name: node.getLastName(),
       deceased: node.getLifeStatus() == 'deceased' ? true : false,
-      date_of_birth: node.getBirthDate() ? node.getBirthDate() : null,
-      date_of_death: node.getDeathDate() ? node.getDeathDate() : null,
+      date_of_birth: node.getBirthDate() ? node.getBirthDate().toISOString().split('T')[0] : null,
+      date_of_death: node.getDeathDate() ? node.getDeathDate().toISOString().split('T')[0] : null,
       sex: node.getGender(true)
     }
     const result = await graphql({ query, variables });
