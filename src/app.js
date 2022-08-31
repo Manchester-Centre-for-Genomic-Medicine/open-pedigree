@@ -23,26 +23,30 @@ var DEV_MODE = false;
 // Expected to be LIVE, TEST, DEVELOP, or LOCAL. Anything else is considered LOCAL
 const GEN_O_VERSION = 'LOCAL';
 
-if (GEN_O_VERSION == 'LIVE') {
+if (GEN_O_VERSION === 'LIVE') {
   var gen_o_domain = "gen-o.eu.auth0.com";
   var gen_o_client_id = "cMDwFfxF4hC1GOs6W35HdDSPmregh6A7";
   var gen_o_audience = "https://gen-o.eu.auth0.com/api/v2/";
   var gen_o_graphql = "https://graphql.northwestglh.com/v1/graphql";
-} else if (GEN_O_VERSION == 'TEST') {
+  var gen_o_application_uri = "https://gen-o.northwestglh.com";
+} else if (GEN_O_VERSION === 'TEST') {
   var gen_o_domain = "gen-o-test.eu.auth0.com";
   var gen_o_client_id = "Kx350GeJFnWb1mYc5H3GjMvG8hrc2OYR";
   var gen_o_audience = "https://gen-o-test.eu.auth0.com/api/v2/";
   var gen_o_graphql = "https://test-graphql.northwestglh.com/v1/graphql";
-} else if (GEN_O_VERSION == 'DEVELOP') {
+  var gen_o_application_uri = "https://test-gen-o.northwestglh.com";
+} else if (GEN_O_VERSION === 'DEVELOP') {
   var gen_o_domain = "gen-o-dev.eu.auth0.com";
   var gen_o_client_id = "d3YJUQgU53bhu4O7nhPtFnXM4LjNUb6U";
   var gen_o_audience = "https://gen-o-dev.eu.auth0.com/api/v2/";
   var gen_o_graphql = "https://develop-graphql.northwestglh.com/v1/graphql";
+  var gen_o_application_uri = "https://develop-gen-o.northwestglh.com";
 } else {
   var gen_o_domain = "gen-o-dev.eu.auth0.com";
   var gen_o_client_id = "d3YJUQgU53bhu4O7nhPtFnXM4LjNUb6U";
   var gen_o_audience = "https://gen-o-dev.eu.auth0.com/api/v2/";
   var gen_o_graphql = "http://localhost:4100/v1/graphql";
+  var gen_o_application_uri = "http://localhost:3000";
 }
 
 document.observe('dom:loaded', async function () {
@@ -626,7 +630,7 @@ document.observe('dom:loaded', async function () {
   });
 
   document.observe('pedigree:person:viewGenO', function(event) {
-    window.open(`https://test-gen-o.northwestglh.com/patients/${event.memo.node.getPhenopacketID()}`, '_blank').focus();
+    window.open(`${gen_o_application_uri}/patients/${event.memo.node.getPhenopacketID()}`, '_blank').focus();
   });
 
   document.observe('pedigree:node:refresh-gen-o-buttons-status', function(event) {
