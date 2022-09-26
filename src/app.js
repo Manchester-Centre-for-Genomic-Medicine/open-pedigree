@@ -192,6 +192,12 @@ document.observe('dom:loaded', async function () {
                 name
               }
             }
+            genomic_interpretations {
+              display_text
+              report_category
+              pathogenicity_text
+              pathogenicity_score
+            }
           }
         }
       }
@@ -274,6 +280,32 @@ document.observe('dom:loaded', async function () {
           hpos.push(new HPOTerm(v.hpo.id, v.hpo.name));
         });
         node.setHPO(hpos);
+        var variants = [];
+        result.data?.individual[0]?.phenopacket?.genomic_interpretations?.each(function(v) {
+          if (v.display_text !== undefined 
+              && (v.pathogenicity_text == 'Pathogenic' || v.pathogenicity_text == 'Likely pathogenic')
+              && (v.report_category == 'Primary' || v.report_category == 'Primary finding')) {
+            var text = v.display_text;
+            text = text.replaceAll('Heterozygous', 'Het');
+            text = text.replaceAll('Homozygous', 'Hom');
+            text = text.replaceAll('Hemizygous', 'Hem');
+            
+            // Attempt to wrap variant text in a box with a line of no more than 30 symbols.
+            var parts = text.split(' ');
+            var formatted_text = '';
+            var line = '';
+            parts.each(function(part) {
+              if (line.length + part.length > 30) {
+                formatted_text += line + '\r\n';
+                line = '';
+              }
+              line += part + ' ';
+            });
+            formatted_text += line;
+            variants.push(formatted_text);
+          }
+        });
+        node.setComments(variants.join('\r\n'));
         disableGenOButtons(true, false, false, false);
       } else {
         var result = await getDemographicsPDS(nhsID);
