@@ -2,6 +2,7 @@ import  { Auth0Client } from "@auth0/auth0-spa-js";
 
 import PedigreeEditor from './script/pedigree';
 import "babel-polyfill";
+import Gene from 'pedigree/gene';
 
 import '@fortawesome/fontawesome-free/js/fontawesome'
 import '@fortawesome/fontawesome-free/js/solid'
@@ -18,10 +19,12 @@ import HPOTerm from 'pedigree/hpoTerm';
 // Global variable, obtained from URL parameters when opened from Gen-O.
 var specialtyID = null;
 // IMPORTANT! Don't forget to change to false before commiting to github!
-var DEV_MODE = false;
+var DEV_MODE = true;
+
+var HGNC_GENES = [];
 
 // Expected to be LIVE, TEST, DEVELOP, or LOCAL. Anything else is considered LOCAL
-const GEN_O_VERSION = 'LOCAL';
+const GEN_O_VERSION = 'TEST';
 
 if (GEN_O_VERSION === 'LIVE') {
   var gen_o_domain = "gen-o.eu.auth0.com";
@@ -91,7 +94,22 @@ document.observe('dom:loaded', async function () {
 
     return result;
   };
-    
+  
+  const getGenes = async function () {
+    const query = `
+      query GetGene {
+        gene(where: {source: {_eq: "HGNC"}}) {
+          symbol
+          hgnc_id
+        }
+      }
+    `;
+    const result = await graphql({ query });
+    return result.data?.gene
+  }
+
+  HGNC_GENES = await getGenes();
+
   const urlParams = new URLSearchParams(window.location.search);
   
   const editor = new PedigreeEditor({
@@ -691,4 +709,19 @@ document.observe('pedigree:person:set:genes', function(event) {
     var gene = genes[i];
     console.log(`${i}) ID: ${gene.getID()}, Name: ${gene.getSymbol()}`);
   }
+});
+
+document.observe('custom:selectize:load:genes', async function(event) {
+  // Function to populate selecitzeJS control with HGNC genes from Gen-O.
+  HGNC_GENES.forEach(function(item) {
+    var gene = new Gene(item.hgnc_id, item.symbol, item.locus_group);
+    item = {
+      id: gene.getID(),
+      name: gene.getSymbol(),
+      value: gene.getDisplayName(),
+      group: gene.getGroup(),
+    }
+    event.memo.addOption(item);
+  });
+  event.memo.refreshOptions();
 });
