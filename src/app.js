@@ -19,12 +19,12 @@ import HPOTerm from 'pedigree/hpoTerm';
 // Global variable, obtained from URL parameters when opened from Gen-O.
 var specialtyID = null;
 // IMPORTANT! Don't forget to change to false before commiting to github!
-var DEV_MODE = true;
+var DEV_MODE = false;
 
 var HGNC_GENES = [];
 
 // Expected to be LIVE, TEST, DEVELOP, or LOCAL. Anything else is considered LOCAL
-const GEN_O_VERSION = 'TEST';
+const GEN_O_VERSION = 'LOCAL';
 
 if (GEN_O_VERSION === 'LIVE') {
   var gen_o_domain = "gen-o.eu.auth0.com";
