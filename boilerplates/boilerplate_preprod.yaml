@@ -1,0 +1,36 @@
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: open-pedigree-preprod
+  labels:
+    app: open-pedigree-preprod
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: open-pedigree-preprod
+  template:
+    metadata:
+      labels:
+        app: open-pedigree-preprod
+    spec:
+      containers:
+        - name: open-pedigree-preprod
+          image: uk.icr.io/mangen-preprod/open-pedigree
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 9000
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      serviceAccountName: mangen-build-preprod
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: open-pedigree-preprod
+spec:
+  selector:
+    app: open-pedigree-preprod
+  ports:
+    - protocol: 'TCP'
+      port: 9000
