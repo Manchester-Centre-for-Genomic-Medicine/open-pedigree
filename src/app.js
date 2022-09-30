@@ -2,6 +2,7 @@ import  { Auth0Client } from "@auth0/auth0-spa-js";
 
 import PedigreeEditor from './script/pedigree';
 import "babel-polyfill";
+import Gene from 'pedigree/gene';
 
 import '@fortawesome/fontawesome-free/js/fontawesome'
 import '@fortawesome/fontawesome-free/js/solid'
@@ -19,6 +20,8 @@ import HPOTerm from 'pedigree/hpoTerm';
 var specialtyID = null;
 // IMPORTANT! Don't forget to change to false before commiting to github!
 var DEV_MODE = false;
+
+var HGNC_GENES = [];
 
 // Expected to be LIVE, TEST, or DEVELOP. Anything else is considered DEVELOP
 const GEN_O_VERSION = 'TEST';
@@ -91,6 +94,21 @@ document.observe('dom:loaded', async function () {
 
     return result;
   };
+  
+  const getGenes = async function () {
+    const query = `
+      query GetGene {
+        gene(where: {source: {_eq: "HGNC"}}) {
+          symbol
+          hgnc_id
+        }
+      }
+    `;
+    const result = await graphql({ query });
+    return result.data?.gene
+  }
+
+  HGNC_GENES = await getGenes();
 
   const urlParams = new URLSearchParams(window.location.search);
 
@@ -192,6 +210,12 @@ document.observe('dom:loaded', async function () {
                 name
               }
             }
+            genomic_interpretations {
+              display_text
+              report_category
+              pathogenicity_text
+              pathogenicity_score
+            }
           }
         }
       }
@@ -274,6 +298,32 @@ document.observe('dom:loaded', async function () {
           hpos.push(new HPOTerm(v.hpo.id, v.hpo.name));
         });
         node.setHPO(hpos);
+        var variants = [];
+        result.data?.individual[0]?.phenopacket?.genomic_interpretations?.each(function(v) {
+          if (v.display_text !== undefined 
+              && (v.pathogenicity_text == 'Pathogenic' || v.pathogenicity_text == 'Likely pathogenic')
+              && (v.report_category == 'Primary' || v.report_category == 'Primary finding')) {
+            var text = v.display_text;
+            text = text.replaceAll('Heterozygous', 'Het');
+            text = text.replaceAll('Homozygous', 'Hom');
+            text = text.replaceAll('Hemizygous', 'Hem');
+            
+            // Attempt to wrap variant text in a box with a line of no more than 30 symbols.
+            var parts = text.split(' ');
+            var formatted_text = '';
+            var line = '';
+            parts.each(function(part) {
+              if (line.length + part.length > 30) {
+                formatted_text += line + '\r\n';
+                line = '';
+              }
+              line += part + ' ';
+            });
+            formatted_text += line;
+            variants.push(formatted_text);
+          }
+        });
+        node.setComments(variants.join('\r\n'));
         disableGenOButtons(true, false, false, false);
       } else {
         var result = await getDemographicsPDS(nhsID);
@@ -691,4 +741,19 @@ document.observe('pedigree:person:set:genes', function(event) {
     var gene = genes[i];
     console.log(`${i}) ID: ${gene.getID()}, Name: ${gene.getSymbol()}`);
   }
+});
+
+document.observe('custom:selectize:load:genes', async function(event) {
+  // Function to populate selecitzeJS control with HGNC genes from Gen-O.
+  HGNC_GENES.forEach(function(item) {
+    var gene = new Gene(item.hgnc_id, item.symbol, item.locus_group);
+    item = {
+      id: gene.getID(),
+      name: gene.getSymbol(),
+      value: gene.getDisplayName(),
+      group: gene.getGroup(),
+    }
+    event.memo.addOption(item);
+  });
+  event.memo.refreshOptions();
 });
