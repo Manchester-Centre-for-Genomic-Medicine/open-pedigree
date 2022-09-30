@@ -1,0 +1,39 @@
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: open-pedigree-mcgm
+  labels:
+    app: open-pedigree-mcgm
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: open-pedigree-mcgm
+  template:
+    metadata:
+      labels:
+        app: open-pedigree-mcgm
+    spec:
+      containers:
+        - name: open-pedigree-mcgm
+          image: uk.icr.io/mangen-develop/open-pedigree
+          envFrom:
+            - secretRef:
+                name: open-pedigree-mcgm-develop
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 9000
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      serviceAccountName: mangen-build-develop
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: open-pedigree-mcgm
+spec:
+  selector:
+    app: open-pedigree-mcgm
+  ports:
+    - protocol: 'TCP'
+      port: 9000
