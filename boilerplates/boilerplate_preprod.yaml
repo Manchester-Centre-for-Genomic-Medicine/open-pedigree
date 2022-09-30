@@ -1,21 +1,21 @@
 kind: Deployment
 apiVersion: apps/v1
 metadata:
-  name: open-pedigree-mcgm
+  name: open-pedigree-preprod
   labels:
-    app: open-pedigree-mcgm
+    app: open-pedigree-preprod
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: open-pedigree-mcgm
+      app: open-pedigree-preprod
   template:
     metadata:
       labels:
-        app: open-pedigree-mcgm
+        app: open-pedigree-preprod
     spec:
       containers:
-        - name: open-pedigree-mcgm
+        - name: open-pedigree-preprod
           image: uk.icr.io/mangen-preprod/open-pedigree
           imagePullPolicy: Always
           ports:
@@ -27,10 +27,10 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: open-pedigree-mcgm
+  name: open-pedigree-preprod
 spec:
   selector:
-    app: open-pedigree-mcgm
+    app: open-pedigree-preprod
   ports:
     - protocol: 'TCP'
       port: 9000
