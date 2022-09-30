@@ -1,4 +1,5 @@
-FROM node:14
+# Stage 1: base image
+FROM node:14 as build-stage
 
 # create the app directory
 RUN mkdir -p /usr/src/app
@@ -13,6 +14,15 @@ RUN npm install \
 # copy over the rest of the source code
 COPY . .
 
-# run the application and make it available outside the container
-CMD ["npm", "run", "start-docker"]
+RUN npm run build
+
+# Stage 2, based on Nginx, to have only the compiled version of the app
+FROM nginx:1.17
+COPY ./nginx.conf /etc/nginx/nginx.conf
+
+COPY index.html /usr/share/nginx/html/
+COPY public /usr/share/nginx/html/public/
+COPY --from=build-stage /usr/src/app/dist/ /usr/share/nginx/html/dist/
+
 EXPOSE 9000
+CMD ["nginx", "-g", "daemon off;"]
