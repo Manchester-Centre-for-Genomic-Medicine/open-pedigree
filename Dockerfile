@@ -17,7 +17,7 @@ COPY . .
 RUN npm run build
 
 # Stage 2, based on Nginx, to have only the compiled version of the app
-FROM nginx:1.17
+FROM docker.io/nginx:1.17
 COPY ./nginx.conf /etc/nginx/nginx.conf
 
 COPY index.html /usr/share/nginx/html/
