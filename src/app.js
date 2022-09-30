@@ -23,8 +23,8 @@ var DEV_MODE = false;
 
 var HGNC_GENES = [];
 
-// Expected to be LIVE, TEST, DEVELOP, or LOCAL. Anything else is considered LOCAL
-const GEN_O_VERSION = 'LOCAL';
+// Expected to be LIVE, TEST, or DEVELOP. Anything else is considered DEVELOP
+const GEN_O_VERSION = 'TEST';
 
 if (GEN_O_VERSION === 'LIVE') {
   var gen_o_domain = "gen-o.eu.auth0.com";
@@ -70,7 +70,7 @@ document.observe('dom:loaded', async function () {
       redirect_uri: window.location.href
     });
   };
-  
+
   if (!authenticated) {
     const query = new URLSearchParams(window.location.search);
     if (query.has('code') && query.has('state')) {
@@ -111,7 +111,7 @@ document.observe('dom:loaded', async function () {
   HGNC_GENES = await getGenes();
 
   const urlParams = new URLSearchParams(window.location.search);
-  
+
   const editor = new PedigreeEditor({
     returnUrl: 'javascript:history.go(-2)',
     autosave: true,
@@ -182,7 +182,7 @@ document.observe('dom:loaded', async function () {
         const result = await graphql({query, variables});
         //setSaveInProgress(false);
       },
-    } 
+    }
   });
 
   const getDemographicsGenO = async function (nhsID) {
@@ -467,7 +467,7 @@ document.observe('dom:loaded', async function () {
         $specialty_id: uuid!
       ) {
         interpretation:insert_interpretation_one(
-          object: 
+          object:
             {
               phenopacket_id: $phenopacket_id,
               specialty_id: $specialty_id
@@ -579,7 +579,7 @@ document.observe('dom:loaded', async function () {
   }
 
   document.observe('pedigree:person:createGenO', async function(event) {
-    var node = event.memo.node;    
+    var node = event.memo.node;
     if(event.memo.node.isNHSNumber(event.memo.node.getExternalID())) {
       var phenopacketID = await insertPhenopacket();
       node.setPhenopacketID(phenopacketID);
@@ -596,34 +596,34 @@ document.observe('dom:loaded', async function () {
         console.log('interpretationID:', interpretationID);
         console.log('caseStetusID:', caseStetusID);
       }
-      disableGenOButtons(true, false, false, true);      
+      disableGenOButtons(true, false, false, true);
     } else {
       alert(`The extrnal ID '${event.memo.node.getExternalID()}' is not a 10-digit NHS number written as XXXXXXXXXX or XXX XXX XXXX.`);
     }
   });
-  
+
   document.observe('pedigree:person:updateGenO', async function(event) {
     var nhsID = event.memo.node.getExternalID(true);
     var result = await getDemographicsGenO(nhsID);
     var changedFields = [];
     if (result.data?.individual[0]?.first_name != event.memo.node.getFirstName()) {
       changedFields.push([
-        'First name', 
-        result.data?.individual[0]?.first_name, 
+        'First name',
+        result.data?.individual[0]?.first_name,
         event.memo.node.getFirstName()
       ]);
     }
     if (result.data?.individual[0]?.last_name != event.memo.node.getLastName()) {
       changedFields.push([
-        'Last name', 
-        result.data?.individual[0]?.last_name, 
+        'Last name',
+        result.data?.individual[0]?.last_name,
         event.memo.node.getLastName()
       ]);
     }
     if (result.data?.individual[0]?.deceased != event.memo.node.getLifeStatus() == 'deceased') {
       changedFields.push([
-        'Life status', 
-        result.data?.individual[0]?.deceased ? 'deceased' : 'alive', 
+        'Life status',
+        result.data?.individual[0]?.deceased ? 'deceased' : 'alive',
         event.memo.node.getLifeStatus()
       ]);
     }
@@ -634,8 +634,8 @@ document.observe('dom:loaded', async function () {
     }
     if (result.data?.individual[0]?.date_of_birth != newBirthDate) {
       changedFields.push([
-        'Date of birth', 
-        result.data?.individual[0]?.date_of_birth, 
+        'Date of birth',
+        result.data?.individual[0]?.date_of_birth,
         newBirthDate
       ]);
     }
@@ -646,15 +646,15 @@ document.observe('dom:loaded', async function () {
     }
     if (result.data?.individual[0]?.date_of_death != newDeathDate) {
       changedFields.push([
-        'Date of death', 
-        result.data?.individual[0]?.date_of_death, 
+        'Date of death',
+        result.data?.individual[0]?.date_of_death,
         newDeathDate
       ]);
     }
     if (result.data?.individual[0]?.sex != event.memo.node.getGender(true)) {
       changedFields.push([
-        'Gender', 
-        result.data?.individual[0]?.sex, 
+        'Gender',
+        result.data?.individual[0]?.sex,
         event.memo.node.getGender(true)
       ]);
     }
@@ -694,7 +694,7 @@ document.observe('dom:loaded', async function () {
       disableGenOButtons(true, true, true, true);
     }
   });
-  
+
   document.observe('pedigree:load:finish', function() {
     // This function synchronizes nodes properties with external resources (Gen-O and NHS PDS)
     // based on NHS IDs when they are loaded.
