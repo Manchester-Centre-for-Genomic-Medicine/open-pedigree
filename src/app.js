@@ -2,6 +2,7 @@ import  { Auth0Client } from "@auth0/auth0-spa-js";
 
 import PedigreeEditor from './script/pedigree';
 import "babel-polyfill";
+import Gene from 'pedigree/gene';
 
 import '@fortawesome/fontawesome-free/js/fontawesome'
 import '@fortawesome/fontawesome-free/js/solid'
@@ -20,24 +21,44 @@ var specialtyID = null;
 // IMPORTANT! Don't forget to change to false before commiting to github!
 var DEV_MODE = false;
 
+var HGNC_GENES = [];
+
+// Expected to be LIVE, TEST, or DEVELOP. Anything else is considered DEVELOP
+const GEN_O_VERSION = 'LIVE';
+
+if (GEN_O_VERSION === 'LIVE') {
+  var gen_o_domain = "gen-o.eu.auth0.com";
+  var gen_o_client_id = "cMDwFfxF4hC1GOs6W35HdDSPmregh6A7";
+  var gen_o_audience = "https://gen-o.eu.auth0.com/api/v2/";
+  var gen_o_graphql = "https://graphql.northwestglh.com/v1/graphql";
+  var gen_o_application_uri = "https://gen-o.northwestglh.com";
+} else if (GEN_O_VERSION === 'TEST') {
+  var gen_o_domain = "gen-o-test.eu.auth0.com";
+  var gen_o_client_id = "Kx350GeJFnWb1mYc5H3GjMvG8hrc2OYR";
+  var gen_o_audience = "https://gen-o-test.eu.auth0.com/api/v2/";
+  var gen_o_graphql = "https://test-graphql.northwestglh.com/v1/graphql";
+  var gen_o_application_uri = "https://test-gen-o.northwestglh.com";
+} else if (GEN_O_VERSION === 'DEVELOP') {
+  var gen_o_domain = "gen-o-dev.eu.auth0.com";
+  var gen_o_client_id = "d3YJUQgU53bhu4O7nhPtFnXM4LjNUb6U";
+  var gen_o_audience = "https://gen-o-dev.eu.auth0.com/api/v2/";
+  var gen_o_graphql = "https://develop-graphql.northwestglh.com/v1/graphql";
+  var gen_o_application_uri = "https://develop-gen-o.northwestglh.com";
+} else {
+  var gen_o_domain = "gen-o-dev.eu.auth0.com";
+  var gen_o_client_id = "d3YJUQgU53bhu4O7nhPtFnXM4LjNUb6U";
+  var gen_o_audience = "https://gen-o-dev.eu.auth0.com/api/v2/";
+  var gen_o_graphql = "http://localhost:4100/v1/graphql";
+  var gen_o_application_uri = "http://localhost:3000";
+}
+
 document.observe('dom:loaded', async function () {
   let auth0 = null;
   const configureAuth0 = async () => {
     auth0 = await new Auth0Client({
-      // LIVE
-      domain: "gen-o.eu.auth0.com",
-      client_id: "cMDwFfxF4hC1GOs6W35HdDSPmregh6A7",
-      audience: "https://gen-o.eu.auth0.com/api/v2/",
-
-      // TEST
-      //domain: "gen-o-test.eu.auth0.com",
-      //client_id: "Kx350GeJFnWb1mYc5H3GjMvG8hrc2OYR",
-      //audience: "https://gen-o-test.eu.auth0.com/api/v2/",
-
-      // DEVELOP
-      //domain: "gen-o-dev.eu.auth0.com",
-      //client_id: "d3YJUQgU53bhu4O7nhPtFnXM4LjNUb6U",
-      //audience: "https://gen-o-dev.eu.auth0.com/api/v2/",
+      domain: gen_o_domain,
+      client_id: gen_o_client_id,
+      audience: gen_o_audience,
     });
   };
 
@@ -49,7 +70,7 @@ document.observe('dom:loaded', async function () {
       redirect_uri: window.location.href
     });
   };
-  
+
   if (!authenticated) {
     const query = new URLSearchParams(window.location.search);
     if (query.has('code') && query.has('state')) {
@@ -61,9 +82,7 @@ document.observe('dom:loaded', async function () {
 
   const graphql = async (body) => {
     const token = await auth0.getTokenSilently();
-
-    // test -> https://test-graphql.northwestglh.com/v1/graphql
-    const result = await fetch("https://graphql.northwestglh.com/v1/graphql", {
+    const result = await fetch(gen_o_graphql, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -75,9 +94,24 @@ document.observe('dom:loaded', async function () {
 
     return result;
   };
-    
-  const urlParams = new URLSearchParams(window.location.search);
   
+  const getGenes = async function () {
+    const query = `
+      query GetGene {
+        gene(where: {source: {_eq: "HGNC"}}) {
+          symbol
+          hgnc_id
+        }
+      }
+    `;
+    const result = await graphql({ query });
+    return result.data?.gene
+  }
+
+  HGNC_GENES = await getGenes();
+
+  const urlParams = new URLSearchParams(window.location.search);
+
   const editor = new PedigreeEditor({
     returnUrl: 'javascript:history.go(-2)',
     autosave: true,
@@ -148,7 +182,7 @@ document.observe('dom:loaded', async function () {
         const result = await graphql({query, variables});
         //setSaveInProgress(false);
       },
-    } 
+    }
   });
 
   const getDemographicsGenO = async function (nhsID) {
@@ -175,6 +209,12 @@ document.observe('dom:loaded', async function () {
                 id
                 name
               }
+            }
+            genomic_interpretations {
+              display_text
+              report_category
+              pathogenicity_text
+              pathogenicity_score
             }
           }
         }
@@ -212,7 +252,7 @@ document.observe('dom:loaded', async function () {
     return result;
   }
 
-  function clearNodeDemographics(node) {
+  const clearNodeDemographics = function(node) {
     node.setFirstName('');
     node.setLastName('');
     node.setLifeStatus('alive');
@@ -224,7 +264,7 @@ document.observe('dom:loaded', async function () {
     node.setDisorders([]);
   }
 
-  function disableGenOButtons(create, update, view, refreshNodeMenu) {
+  const disableGenOButtons = function(create, update, view, refreshNodeMenu) {
     editor.getNodeMenu().fieldMap['createGenO'].disabled = create;
     editor.getNodeMenu().fieldMap['updateGenO'].disabled = update;
     editor.getNodeMenu().fieldMap['viewGenO'].disabled = view;
@@ -233,71 +273,90 @@ document.observe('dom:loaded', async function () {
     }
   }
 
-  // hook externalid up to the gen-o database
-  document.observe('pedigree:person:set:externalid', async (event) => {
-    event.memo.node.setPhenopacketID('');
-    if(event.memo.node.isNHSNumber(event.memo.value)) {
-      var nhsID = event.memo.value.replaceAll(' ', '');
+  const updateNodeOnExternalIDChange = async function (node) {
+    node.setPhenopacketID('');
+    if(node.isNHSNumber(node.getExternalID())) {
+      var nhsID = node.getExternalID().replaceAll(' ', '');
       var result = await getDemographicsGenO(nhsID);
       if (result.data?.individual[0]) {
-        clearNodeDemographics(event.memo.node);
-        event.memo.node.setFirstName(
-          result.data?.individual[0]?.first_name
-        );
-        event.memo.node.setLastName(
-          result.data?.individual[0]?.last_name
-        );
-        event.memo.node.setPhenopacketID(
-          result.data?.individual[0]?.phenopacket_id
-        );
-        event.memo.node.setLifeStatus(
+        clearNodeDemographics(node);
+        node.setFirstName(result.data?.individual[0]?.first_name);
+        node.setLastName(result.data?.individual[0]?.last_name);
+        node.setPhenopacketID(result.data?.individual[0]?.phenopacket_id);
+        node.setLifeStatus(
           result.data?.individual[0]?.deceased
             ? 'deceased'
             : 'alive'
         );
-        event.memo.node.setBirthDate(
-          new Date(result.data?.individual[0]?.date_of_birth)
-        );
-        event.memo.node.setDeathDate(
-          new Date(result.data?.individual[0]?.date_of_death)
-        );
-        event.memo.node.setGender(
-          result.data?.individual[0]?.sex
-        );
+        var parsedBirthDate = new Date(result.data?.individual[0]?.date_of_birth);
+        node.setBirthDate(parsedBirthDate.toDateString());
+        var parsedDeathDate = new Date(result.data?.individual[0]?.date_of_death);
+        node.setDeathDate(parsedDeathDate.toDateString());
+        node.setGender(result.data?.individual[0]?.sex);
         var hpos = [];
         result.data?.individual[0]?.phenopacket?.phenotypic_features?.each(function(v) {
           hpos.push(new HPOTerm(v.hpo.id, v.hpo.name));
         });
-        event.memo.node.setHPO(hpos);
+        node.setHPO(hpos);
+        var variants = [];
+        result.data?.individual[0]?.phenopacket?.genomic_interpretations?.each(function(v) {
+          if (v.display_text !== undefined 
+              && (v.pathogenicity_text == 'Pathogenic' || v.pathogenicity_text == 'Likely pathogenic')
+              && (v.report_category == 'Primary' || v.report_category == 'Primary finding')) {
+            var text = v.display_text;
+            text = text.replaceAll('Heterozygous', 'Het');
+            text = text.replaceAll('Homozygous', 'Hom');
+            text = text.replaceAll('Hemizygous', 'Hem');
+            
+            // Attempt to wrap variant text in a box with a line of no more than 30 symbols.
+            var parts = text.split(' ');
+            var formatted_text = '';
+            var line = '';
+            parts.each(function(part) {
+              if (line.length + part.length > 30) {
+                formatted_text += line + '\r\n';
+                line = '';
+              }
+              line += part + ' ';
+            });
+            formatted_text += line;
+            variants.push(formatted_text);
+          }
+        });
+        node.setComments(variants.join('\r\n'));
         disableGenOButtons(true, false, false, false);
       } else {
         var result = await getDemographicsPDS(nhsID);
         if (result.data?.individual) {
-          clearNodeDemographics(event.memo.node);
+          clearNodeDemographics(node);
           var names = result.data.individual.name.sort(function(a, b) {
             return new Date(b.period.start) - new Date(a.period.start);
           });
-          event.memo.node.setFirstName(names[0]?.given[0]);
-          event.memo.node.setLastName(names[0]?.family);
-          event.memo.node.setLifeStatus(
+          node.setFirstName(names[0]?.given[0]);
+          node.setLastName(names[0]?.family);
+          node.setLifeStatus(
             result.data.individual?.deceased
               ? 'deceased'
               : 'alive'
           );
-          event.memo.node.setBirthDate(
-            new Date(result.data.individual?.birthDate)
-          );
-          event.memo.node.setDeathDate(
-            new Date(result.data.individual?.deceasedDateTime)
-          );
-          event.memo.node.setGender(result.data.individual.gender);
+          var parsedBirthDate = new Date(result.data.individual?.birthDate);
+          node.setBirthDate(parsedBirthDate.toDateString());
+          var parsedDeathDate = new Date(result.data.individual?.deceasedDateTime);
+          node.setDeathDate(parsedDeathDate.toDateString());
+          node.setGender(result.data.individual.gender);
         }
         disableGenOButtons(false, true, true, false);
       }
+      editor.getGraph().setProperties(node.getID(), node.getProperties());
       editor.getNodeMenu().update();
     } else {
       disableGenOButtons(true, true, true, false);
     }
+  }
+
+  // hook externalid up to the gen-o or NHS PDS databases
+  document.observe('pedigree:person:set:externalid', async (event) => {
+    updateNodeOnExternalIDChange(event.memo.node);
   });
 
   const getPhenopacketID = async function (nhsID) {
@@ -408,7 +467,7 @@ document.observe('dom:loaded', async function () {
         $specialty_id: uuid!
       ) {
         interpretation:insert_interpretation_one(
-          object: 
+          object:
             {
               phenopacket_id: $phenopacket_id,
               specialty_id: $specialty_id
@@ -511,8 +570,8 @@ document.observe('dom:loaded', async function () {
       first_name: node.getFirstName(),
       last_name: node.getLastName(),
       deceased: node.getLifeStatus() == 'deceased' ? true : false,
-      date_of_birth: node.getBirthDate() ? node.getBirthDate() : null,
-      date_of_death: node.getDeathDate() ? node.getDeathDate() : null,
+      date_of_birth: node.getBirthDate() ? node.getBirthDate().toISOString().split('T')[0] : null,
+      date_of_death: node.getDeathDate() ? node.getDeathDate().toISOString().split('T')[0] : null,
       sex: node.getGender(true)
     }
     const result = await graphql({ query, variables });
@@ -520,7 +579,7 @@ document.observe('dom:loaded', async function () {
   }
 
   document.observe('pedigree:person:createGenO', async function(event) {
-    var node = event.memo.node;    
+    var node = event.memo.node;
     if(event.memo.node.isNHSNumber(event.memo.node.getExternalID())) {
       var phenopacketID = await insertPhenopacket();
       node.setPhenopacketID(phenopacketID);
@@ -537,34 +596,34 @@ document.observe('dom:loaded', async function () {
         console.log('interpretationID:', interpretationID);
         console.log('caseStetusID:', caseStetusID);
       }
-      disableGenOButtons(true, false, false, true);      
+      disableGenOButtons(true, false, false, true);
     } else {
       alert(`The extrnal ID '${event.memo.node.getExternalID()}' is not a 10-digit NHS number written as XXXXXXXXXX or XXX XXX XXXX.`);
     }
   });
-  
+
   document.observe('pedigree:person:updateGenO', async function(event) {
     var nhsID = event.memo.node.getExternalID(true);
     var result = await getDemographicsGenO(nhsID);
     var changedFields = [];
     if (result.data?.individual[0]?.first_name != event.memo.node.getFirstName()) {
       changedFields.push([
-        'First name', 
-        result.data?.individual[0]?.first_name, 
+        'First name',
+        result.data?.individual[0]?.first_name,
         event.memo.node.getFirstName()
       ]);
     }
     if (result.data?.individual[0]?.last_name != event.memo.node.getLastName()) {
       changedFields.push([
-        'Last name', 
-        result.data?.individual[0]?.last_name, 
+        'Last name',
+        result.data?.individual[0]?.last_name,
         event.memo.node.getLastName()
       ]);
     }
     if (result.data?.individual[0]?.deceased != event.memo.node.getLifeStatus() == 'deceased') {
       changedFields.push([
-        'Life status', 
-        result.data?.individual[0]?.deceased ? 'deceased' : 'alive', 
+        'Life status',
+        result.data?.individual[0]?.deceased ? 'deceased' : 'alive',
         event.memo.node.getLifeStatus()
       ]);
     }
@@ -575,8 +634,8 @@ document.observe('dom:loaded', async function () {
     }
     if (result.data?.individual[0]?.date_of_birth != newBirthDate) {
       changedFields.push([
-        'Date of birth', 
-        result.data?.individual[0]?.date_of_birth, 
+        'Date of birth',
+        result.data?.individual[0]?.date_of_birth,
         newBirthDate
       ]);
     }
@@ -587,15 +646,15 @@ document.observe('dom:loaded', async function () {
     }
     if (result.data?.individual[0]?.date_of_death != newDeathDate) {
       changedFields.push([
-        'Date of death', 
-        result.data?.individual[0]?.date_of_death, 
+        'Date of death',
+        result.data?.individual[0]?.date_of_death,
         newDeathDate
       ]);
     }
     if (result.data?.individual[0]?.sex != event.memo.node.getGender(true)) {
       changedFields.push([
-        'Gender', 
-        result.data?.individual[0]?.sex, 
+        'Gender',
+        result.data?.individual[0]?.sex,
         event.memo.node.getGender(true)
       ]);
     }
@@ -621,7 +680,7 @@ document.observe('dom:loaded', async function () {
   });
 
   document.observe('pedigree:person:viewGenO', function(event) {
-    window.open(`https://test-gen-o.northwestglh.com/patients/${event.memo.node.getPhenopacketID()}`, '_blank').focus();
+    window.open(`${gen_o_application_uri}/patients/${event.memo.node.getPhenopacketID()}`, '_blank').focus();
   });
 
   document.observe('pedigree:node:refresh-gen-o-buttons-status', function(event) {
@@ -633,6 +692,16 @@ document.observe('dom:loaded', async function () {
       }
     } else {
       disableGenOButtons(true, true, true, true);
+    }
+  });
+
+  document.observe('pedigree:load:finish', function() {
+    // This function synchronizes nodes properties with external resources (Gen-O and NHS PDS)
+    // based on NHS IDs when they are loaded.
+    for (const [elementID, element] of Object.entries(editor.getView().getNodeMap())) {
+      if (element.getType() == 'Person') {
+        updateNodeOnExternalIDChange(element);
+      }
     }
   });
 });
@@ -672,4 +741,19 @@ document.observe('pedigree:person:set:genes', function(event) {
     var gene = genes[i];
     console.log(`${i}) ID: ${gene.getID()}, Name: ${gene.getSymbol()}`);
   }
+});
+
+document.observe('custom:selectize:load:genes', async function(event) {
+  // Function to populate selecitzeJS control with HGNC genes from Gen-O.
+  HGNC_GENES.forEach(function(item) {
+    var gene = new Gene(item.hgnc_id, item.symbol, item.locus_group);
+    item = {
+      id: gene.getID(),
+      name: gene.getSymbol(),
+      value: gene.getDisplayName(),
+      group: gene.getGroup(),
+    }
+    event.memo.addOption(item);
+  });
+  event.memo.refreshOptions();
 });
