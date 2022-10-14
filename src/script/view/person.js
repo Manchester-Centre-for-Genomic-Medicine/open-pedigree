@@ -76,6 +76,26 @@ var Person = Class.create(AbstractPerson, {
   },
 
   /**
+     * Returns date as day/month/year string
+     *
+     * @method _getDateDMY
+     * @param {Date} dateObj Date object
+     * @return {String}
+     */
+  _getDateDMY: function(dateObj) {
+    var day = dateObj.getUTCDate();
+    if (day < 10) {
+      day = '0' + day
+    }    
+    var month = dateObj.getUTCMonth() + 1; //months from 1-12
+    if (month < 10) {
+      month = '0' + month
+    }
+    var year = dateObj.getUTCFullYear();
+    return day + "/" + month + "/" + year;
+  },
+
+  /**
      * Returns True if this node is the proband (i.e. the main patient)
      *
      * @method isProband
@@ -435,6 +455,21 @@ var Person = Class.create(AbstractPerson, {
   },
 
   /**
+     * Returns the the birth date of this Person in day/month/year format
+     *
+     * @method getBirthDateDMY
+     * @return {String}
+     */
+  getBirthDateDMY: function() {
+    if (this._birthDate) {
+      return this._getDateDMY(this._birthDate)
+    }
+    else {
+      return '';
+    }
+  },
+
+  /**
      * Replaces the birth date with newDate
      *
      * @method setBirthDate
@@ -458,6 +493,21 @@ var Person = Class.create(AbstractPerson, {
     return this._deathDate;
   },
 
+  /**
+     * Returns the the death date of this Person in day/month/year format
+     *
+     * @method getDeathDateDMY
+     * @return {String}
+     */
+   getDeathDateDMY: function() {
+    if (this._deathDate) {
+      return this._getDateDMY(this._deathDate)
+    }
+    else {
+      return '';
+    }
+  },
+      
   /**
      * Replaces the death date with deathDate
      *
