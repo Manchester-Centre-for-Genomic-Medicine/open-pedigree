@@ -252,16 +252,16 @@ document.observe('dom:loaded', async function () {
     return result;
   }
 
-  const clearNodeDemographics = function(node) {
+  const clearNodeDemographics = function(node, clear_hpos) {
     node.setFirstName('');
     node.setLastName('');
     node.setLifeStatus('alive');
     node.setBirthDate('');
     node.setDeathDate('');
     node.setGender('U');
-    node.setHPO([]);
-    node.setGenes([]);
-    node.setDisorders([]);
+    if (clear_hpos == true) {
+      node.setHPO([]);
+    }
   }
 
   const disableGenOButtons = function(create, update, view, refreshNodeMenu) {
@@ -279,7 +279,7 @@ document.observe('dom:loaded', async function () {
       var nhsID = node.getExternalID().replaceAll(' ', '');
       var result = await getDemographicsGenO(nhsID);
       if (result.data?.individual[0]) {
-        clearNodeDemographics(node);
+        clearNodeDemographics(node, true);
         node.setFirstName(result.data?.individual[0]?.first_name);
         node.setLastName(result.data?.individual[0]?.last_name);
         node.setPhenopacketID(result.data?.individual[0]?.phenopacket_id);
@@ -328,7 +328,7 @@ document.observe('dom:loaded', async function () {
       } else {
         var result = await getDemographicsPDS(nhsID);
         if (result.data?.individual) {
-          clearNodeDemographics(node);
+          clearNodeDemographics(node, false);
           var names = result.data.individual.name.sort(function(a, b) {
             return new Date(b.period.start) - new Date(a.period.start);
           });
