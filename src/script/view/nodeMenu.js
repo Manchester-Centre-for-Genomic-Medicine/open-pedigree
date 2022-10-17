@@ -251,6 +251,10 @@ var NodeMenu = Class.create({
             },
           },
           onInitialize: function() {
+            // Code to load gene data from Gen-O database (observed in app.js).
+            document.fire('custom:selectize:load:genes', this);
+            /*
+            // Code to load gene data from HGNC API.
             var _this = this
             jQuery.ajax({
               url: 'https://ftp.ebi.ac.uk/pub/databases/genenames/hgnc/json/non_alt_loci_set.json',
@@ -277,6 +281,7 @@ var NodeMenu = Class.create({
                 _this.refreshOptions();
               }
             });
+            */
           },
           onChange: function() {
             this.fieldName = 'candidate_genes';
