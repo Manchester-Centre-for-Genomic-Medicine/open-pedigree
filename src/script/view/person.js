@@ -83,15 +83,15 @@ var Person = Class.create(AbstractPerson, {
      * @return {String}
      */
   _getDateDMY: function(dateObj) {
-    var day = dateObj.getUTCDate();
+    var day = dateObj.getDate();
     if (day < 10) {
       day = '0' + day
     }    
-    var month = dateObj.getUTCMonth() + 1; //months from 1-12
+    var month = dateObj.getMonth() + 1; //months from 1-12
     if (month < 10) {
       month = '0' + month
     }
-    var year = dateObj.getUTCFullYear();
+    var year = dateObj.getFullYear();
     return day + "/" + month + "/" + year;
   },
 

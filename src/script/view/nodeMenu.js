@@ -104,6 +104,8 @@ var NodeMenu = Class.create({
 
     // Attach pickers
     // date
+    /*
+    // Original XWiki control was replaced with html input type=date 
     var crtYear = new Date().getFullYear();
     window.dateTimePicker = new XWiki.widgets.DateTimePicker({
       year_range: [crtYear - 99, crtYear + 1],
@@ -111,6 +113,7 @@ var NodeMenu = Class.create({
         this._selector.updateSelectedDate({day: date.getDate(), month: date.getMonth(), year : date.getYear() + 1900}, false);
       }
     });
+    */
     // disease
     this.form.select('input.suggest-orphanet').each(function(item) {
       if (!item.hasClassName('initialized')) {
@@ -529,14 +532,32 @@ var NodeMenu = Class.create({
           var properties = {};
           properties[method] = _this.fieldMap[field.name].crtValue;
           var event = { 'nodeID': target.getID(), 'properties': properties };
-          document.fire('pedigree:node:setproperty', event);
+          if (field.name == 'date_of_birth' || field.name == 'date_of_death') {
+            setTimeout(function() {
+              document.fire('pedigree:node:setproperty', event);
+            }, 2000);
+          } else {
+            document.fire('pedigree:node:setproperty', event);
+          }
         } else {
           var properties = {};
           properties[method] = _this.fieldMap[field.name].crtValue;
           var event = { 'nodeID': target.getID(), 'modifications': properties };
-          document.fire('pedigree:node:modify', event);
+          if (field.name == 'date_of_birth' || field.name == 'date_of_death') {
+            setTimeout(function() {
+              document.fire('pedigree:node:modify', event);
+            }, 2000);
+          } else {
+            document.fire('pedigree:node:modify', event);
+          }
         }
-        field.fire('pedigree:change');
+        if (field.name == 'date_of_birth' || field.name == 'date_of_death') {
+          setTimeout(function() {
+            field.fire('pedigree:change');
+          }, 2010);
+        } else {
+          field.fire('pedigree:change');
+        }
       });
     });
   },
@@ -640,6 +661,8 @@ var NodeMenu = Class.create({
       this._attachFieldEventListeners(text, ['keyup'], [true]);
       return result;
     },
+    /*
+    // Original XWiki control was replaced with html input type=date 
     'date-picker' : function (data) {
       var result = this._generateEmptyField(data);
       var datePicker = new Element('input', {type: 'text', 'class': 'xwiki-date', name: data.name, 'title': data.format, alt : '' });
@@ -648,6 +671,23 @@ var NodeMenu = Class.create({
         return [this.alt && Date.parseISO_8601(this.alt)];
       }.bind(datePicker);
       this._attachFieldEventListeners(datePicker, ['xwiki:date:changed']);
+      return result;
+    },
+    */
+    'date-picker' : function (data) {
+      var result = this._generateEmptyField(data);
+      var datePicker = document.createElement("INPUT");
+      datePicker.setAttribute("type", "date");
+      datePicker.setAttribute("name", data.name);
+      result.insert(datePicker);
+      datePicker._getValue = function() {
+        var date = '';
+        if (this.value) {
+          date = new Date(this.value + 'T00:00:00');
+        }
+        return [date];
+      }.bind(datePicker);
+      this._attachFieldEventListeners(datePicker, ['change']);
       return result;
     },
     'disease-picker' : function (data) {
@@ -979,11 +1019,20 @@ var NodeMenu = Class.create({
         target.value = value;
       }
     },
+    /*
+    // Original XWiki control was replaced with html input type=date 
     'date-picker' : function (container, value) {
       var target = container.down('input[type=text].xwiki-date');
       if (target) {
         target.value = value && value.toFormattedString({'format_mask' : target.title}) || '';
         target.alt = value && value.toISO8601() || '';
+      }
+    },
+    */
+    'date-picker' : function (container, value) {
+      var target = container.down('input[type=date]');
+      if (target) {
+        target.value = value && value.toISO8601().split('T')[0] || '';
       }
     },
     'disease-picker' : function (container, values) {
