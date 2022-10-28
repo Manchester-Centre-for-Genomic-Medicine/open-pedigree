@@ -54,6 +54,10 @@ var PedigreeEditor = Class.create({
 
     window.editor = this;
 
+    // initialize node coloring sources and selected source
+    this.coloringSources = ['Disorder', 'Gene', 'HPO']
+    this.coloringSource = 'Disorder'
+
     // initialize main data structure which holds the graph structure
     this._graphModel = DynamicPositionedGraph.makeEmpty(PedigreeEditorParameters.attributes.layoutRelativePersonWidth, PedigreeEditorParameters.attributes.layoutRelativeOtherWidth);
 
@@ -65,6 +69,7 @@ var PedigreeEditor = Class.create({
     this._nodetypeSelectionBubble = new NodetypeSelectionBubble(false);
     this._siblingSelectionBubble  = new NodetypeSelectionBubble(true);
     this._disorderLegend = new DisorderLegend();
+    this._disorderLegend.setShowColors(true);
     this._geneLegend = new GeneLegend();
     this._hpoLegend = new HPOLegend();
     this._fhirTerminologyHelper = options.fhirTerminologyHelper || new DefaultFhirTerminologyHelper();
@@ -130,6 +135,12 @@ var PedigreeEditor = Class.create({
       }
     });
 
+    var switchColorButton = $('action-switch-coloring');
+    switchColorButton && this.updateSwitchColorButtonLabel();
+    switchColorButton && switchColorButton.on('click', function(event) {
+      document.fire('pedigree:graph:switch-coloring');
+    });
+
     var unsupportedBrowserButton = $('action-readonlymessage');
     unsupportedBrowserButton && unsupportedBrowserButton.on('click', function(event) {
       alert('Your browser does not support all the features required for ' +
@@ -161,6 +172,38 @@ var PedigreeEditor = Class.create({
     return () => {
       editor.getSaveLoadEngine().save(patientDataUrl);
     };
+  },
+
+  /**
+     * Return coloring source Disorder, Gene, or HPO.
+     * @method getColoringSource
+     * @return {String} coloring source 
+     */
+  getColoringSource() {
+    return this.coloringSource;
+  },
+
+  /**
+     * Switch selected coloring source between Disorder, Gene, and HPO.
+     * @method switchColoringSource
+     */
+  switchColoringSource: function() {
+    var i = this.coloringSources.indexOf(this.coloringSource);
+    if (i < this.coloringSources.length - 1) {
+      this.coloringSource = this.coloringSources[i + 1];
+    } else {
+      this.coloringSource = this.coloringSources[0];
+    }
+    this.updateSwitchColorButtonLabel();
+  },
+
+  /**
+     * Updates the label of switch coloring button with the current coloring source (Disorder, Gene, HPO).
+     * @method updateSwitchColorButtonLabel
+     */
+  updateSwitchColorButtonLabel: function() {
+    var switchColorButton = $('action-switch-coloring');
+    switchColorButton.children[1].innerText = `Switch coloring (Now ${this.coloringSource})`;
   },
 
   /**

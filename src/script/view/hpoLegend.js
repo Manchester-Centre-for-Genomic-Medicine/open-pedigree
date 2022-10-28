@@ -1,4 +1,5 @@
 import HPOTerm from 'pedigree/hpoTerm';
+import Raphael from 'pedigree/raphael';
 import Legend from 'pedigree/view/legend';
 
 /**
@@ -40,17 +41,6 @@ var HPOLegend = Class.create( Legend, {
   },
 
   /**
-     * Retrieve the color associated with the given object
-     *
-     * @method getObjectColor
-     * @param {String|Number} id ID of the object
-     * @return {String} CSS color value for that disorder
-     */
-  getObjectColor: function(id) {
-    return '#CCCCCC';
-  },
-
-  /**
      * Registers an occurrence of a phenotype.
      *
      * @method addCase
@@ -74,9 +64,58 @@ var HPOLegend = Class.create( Legend, {
      * @private
      */
   _updateTermName: function(id) {
-    //console.log("updating phenotype display for " + id + ", name = " + this.getTerm(id).getName());
     var name = this._legendBox.down('li#' + this._getPrefix() + '-' + id + ' .disorder-name');
     name.update(this.getTerm(id).getName());
+  },
+
+  /**
+     * Generate the element that will display information about the given hpo in the legend
+     *
+     * @method _generateElement
+     * @param {String} id The id for the hpo term
+     * @param {String} name The human-readable gene description
+     * @return {HTMLLIElement} List element to be insert in the legend
+     */
+   _generateElement: function($super, id, name) {
+    if (!this._objectColors.hasOwnProperty(id) && this._showColors) {
+      var color = this._generateColor(id);
+      this._objectColors[id] = color;
+      document.fire('hpo:color', {'id' : id, color: color});
+    }
+
+    return $super(id, name);
+  },
+
+  /**
+     * Generates a CSS color.
+     * Has preference for some predefined colors that can be distinguished in gray-scale
+     *
+     * @method generateColor
+     * @return {String} CSS color
+     */
+  _generateColor: function(id) {
+    if(this._objectColors.hasOwnProperty(id)) {
+      return this._objectColors[id];
+    }
+
+    var usedColors = Object.values(this._objectColors),
+      // RColorBrewer "Paired" palette
+      //prefColors = ["#A6CEE3", "#1F78B4", "#B2DF8A", "#33A02C", "#FB9A99", "#E31A1C", 
+      //  "#FDBF6F", "#FF7F00", "#CAB2D6", "#6A3D9A", "#FFFF99", "#B15928"];
+      // Magma (12) color palette https://waldyrious.net/viridis-palette-generator/
+      prefColors = ['#fcfdbf', '#fed395', '#fea973', '#fa7d5e', '#e95462', '#c83e73', '#a3307e', '#7e2482', '#59157e', '#331067', '#120d31', '#000004'];
+    usedColors.each( function(color) {
+      prefColors = prefColors.without(color);
+    });
+    if(prefColors.length > 0) {
+      return prefColors[0];
+    } else {
+      var randomColor = Raphael.getColor();
+      while(randomColor == '#ffffff' || usedColors.indexOf(randomColor) != -1) {
+        randomColor = '#'+((1<<24)*Math.random()|0).toString(16);
+      }
+      return randomColor;
+    }
   }
 });
 
