@@ -474,6 +474,24 @@ var NodeMenu = Class.create({
       _this._updateDisorderColor(event.memo.id, event.memo.color);
     });
 
+    // Update hpo colors
+    this._updateHPOColor = function(id, color) {
+      this.menuBox.select('.field-hpo_positive li input[value="' + id + '"]').each(function(item) {
+        var colorBubble = item.up('li').down('.disorder-color');
+        if (!colorBubble) {
+          colorBubble = new Element('span', {'class' : 'disorder-color'});
+          item.up('li').insert({top : colorBubble});
+        }
+        colorBubble.setStyle({background : color});
+      });
+    }.bind(this);
+    document.observe('hpo:color', function(event) {
+      if (!event.memo || !event.memo.id || !event.memo.color) {
+        return;
+      }
+      _this._updateHPOColor(event.memo.id, event.memo.color);
+    });
+
     // Update gene colors
     this._updateGeneColor = function(id, color) {
       this.menuBox.select('.field-candidate_genes li input[value="' + id + '"]').each(function(item) {
@@ -1047,7 +1065,9 @@ var NodeMenu = Class.create({
             var disorder = new Disorder(v.id, v.value);
             target.selectize.addOption({value: disorder.getDisplayName(), id: disorder.getDesanitizedDisorderID(), name: disorder.getName()});
             target.selectize.addItem(disorder.getDisplayName(), true);
-            _this._updateDisorderColor(v.id, editor.getDisorderLegend().getObjectColor(v.id));
+            if (editor.getDisorderLegend().getShowColors()) {
+              _this._updateDisorderColor(v.id, editor.getDisorderLegend().getObjectColor(v.id));
+            }
           });
         }
       }
@@ -1078,6 +1098,9 @@ var NodeMenu = Class.create({
             var hpoTerm = new HPOTerm(v.id, v.value);
             target.selectize.addOption({value: hpoTerm.getDisplayName(), id: hpoTerm.getDesanitizedID(), name: hpoTerm.getName()});
             target.selectize.addItem(hpoTerm.getDisplayName(), true);
+            if (editor.getHPOLegend().getShowColors()) {
+              _this._updateHPOColor(v.id, editor.getHPOLegend().getObjectColor(v.id));
+            }
           });
         }
       }
@@ -1109,7 +1132,9 @@ var NodeMenu = Class.create({
             // but only symbols are used in gene legend.
             target.selectize.addOption({value: gene.getDisplayName(), id: gene.getID(), name: gene.getSymbol(), group: gene.getGroup()});
             target.selectize.addItem(gene.getDisplayName(), true);
-            _this._updateGeneColor(gene.getSymbol(), editor.getGeneLegend().getObjectColor(gene.getSymbol()));
+            if (editor.getGeneLegend().getShowColors()) {
+              _this._updateGeneColor(gene.getSymbol(), editor.getGeneLegend().getObjectColor(gene.getSymbol()));
+            }
           });
         }
       }
