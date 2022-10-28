@@ -95,6 +95,12 @@ var NodeMenu = Class.create({
         insertLocation.insert(_this._generateField[d.type].call(_this, d));
       }
     });
+    
+    // Date picker event queues used to fire only the last on change event after user is inactive for X secs.
+    this._datepickerEventQueue = {
+      'date_of_birth': [],
+      'date_of_death': [],
+    }
 
     // Insert in document
     this.hide();
@@ -528,6 +534,21 @@ var NodeMenu = Class.create({
     return result;
   },
 
+  _handleDatePickerChangeEvent : function (field, event, fireEventName) {
+    var _this = this;
+    // Add event to a datepicker queue (date of birth and date of death events are processed separately).
+    _this._datepickerEventQueue[field.name].push(event);
+    var eventNum = _this._datepickerEventQueue[field.name].length;
+    // Wait for X sec and trigger update if no new events were added to the queue.
+    setTimeout(function(eventNum) {
+      if (_this._datepickerEventQueue[field.name].length == eventNum) {
+        document.fire(fireEventName, _this._datepickerEventQueue[field.name].pop());
+        _this._datepickerEventQueue[field.name] = [];
+        field.fire('pedigree:change');
+      }
+    }, 2000, eventNum);
+  },
+
   _attachFieldEventListeners : function (field, eventNames, values) {
     var _this = this;
     eventNames.each(function(eventName) {
@@ -551,9 +572,7 @@ var NodeMenu = Class.create({
           properties[method] = _this.fieldMap[field.name].crtValue;
           var event = { 'nodeID': target.getID(), 'properties': properties };
           if (field.name == 'date_of_birth' || field.name == 'date_of_death') {
-            setTimeout(function() {
-              document.fire('pedigree:node:setproperty', event);
-            }, 2000);
+            _this._handleDatePickerChangeEvent(field, event, 'pedigree:node:setproperty');
           } else {
             document.fire('pedigree:node:setproperty', event);
           }
@@ -562,18 +581,12 @@ var NodeMenu = Class.create({
           properties[method] = _this.fieldMap[field.name].crtValue;
           var event = { 'nodeID': target.getID(), 'modifications': properties };
           if (field.name == 'date_of_birth' || field.name == 'date_of_death') {
-            setTimeout(function() {
-              document.fire('pedigree:node:modify', event);
-            }, 2000);
+            _this._handleDatePickerChangeEvent(field, event, 'pedigree:node:modify');
           } else {
             document.fire('pedigree:node:modify', event);
           }
         }
-        if (field.name == 'date_of_birth' || field.name == 'date_of_death') {
-          setTimeout(function() {
-            field.fire('pedigree:change');
-          }, 2010);
-        } else {
+        if (field.name != 'date_of_birth' && field.name != 'date_of_death') {
           field.fire('pedigree:change');
         }
       });
