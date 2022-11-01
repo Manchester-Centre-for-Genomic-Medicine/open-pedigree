@@ -138,6 +138,10 @@ var NodeMenu = Class.create({
             },
           },
           onInitialize: function() {
+            // Code to load gene data from Gen-O database (observed in app.js).
+            document.fire('custom:selectize:load:disorders', this);
+            /*
+            // Code to load gene data from HGNC API.
             var _this = this
             jQuery.ajax({
               url: 'https://api.orphacode.org/EN/ClinicalEntity',
@@ -163,6 +167,7 @@ var NodeMenu = Class.create({
                 _this.refreshOptions();
               }
             });
+            */
           },
           onChange: function() {
             this.fieldName = 'disorders';
