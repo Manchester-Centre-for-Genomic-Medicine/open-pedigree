@@ -131,7 +131,7 @@ var NodeMenu = Class.create({
             },
             option: function(item, escape) {
               var div = '<div><table>' +
-              '<tr><td><span class="id disorder">' + 'ORPHA:' + escape(item.id) + '</span></td>' +
+              '<tr><td><span class="id disorder">' + escape(item.id) + '</span></td>' +
               '<td><span class="name">' + escape(item.name) + '</span></td></tr>';
               div += '</table></div>';
               return div;

@@ -25,16 +25,8 @@ var Disorder = Class.create( {
     // Load disorder id and name from display name.
     if (disorderID == null && name.includes(' | ')) {
       var disorderInfo = name.split(' | ');
-      
-      if (disorderInfo[0].includes(':')) {
-        var disorderIDParts = disorderInfo[0].split(':');
-        this._source = disorderIDParts[0];
-        this._disorderID = Disorder.sanitizeID(disorderIDParts[1]);
-      }
-      else {
-        this._source = source;
-        this._disorderID = Disorder.sanitizeID(disorderInfo[0]);
-      }
+      this._source = source;
+      this._disorderID = Disorder.sanitizeID(disorderInfo[0]);
       this._name  = disorderInfo[1];
     } else {
       this._disorderID  = Disorder.sanitizeID(disorderID);
@@ -72,7 +64,7 @@ var Disorder = Class.create( {
     * Returns the display name of the term in format "hpoID | name"
     */
   getDisplayName: function() {
-    return this._source + ':' + Disorder.desanitizeID(this._disorderID) + ' | ' + this._name;
+    return Disorder.desanitizeID(this._disorderID) + ' | ' + this._name;
   },
 
   load: function(callWhenReady) {
@@ -138,11 +130,17 @@ Disorder.sanitizeID = function(disorderID) {
   }
   var temp = disorderID.replace(/[\(\[]/g, '_L_');
   temp = temp.replace(/[\)\]]/g, '_J_');
+  temp = temp.replace(/[:]/g, '_C_');
+  temp = temp.replace(/[\-]/g, '_M_');
+  temp = temp.replace(/[\.]/g, '_D_');
   return temp.replace(/[^a-zA-Z0-9,;_\-*]/g, '__');
 };
 
 Disorder.desanitizeID = function(disorderID) {
   var temp = disorderID.replace(/__/g, ' ');
+  temp = temp.replace(/_C_/g, ':');
+  temp = temp.replace(/_M_/g, '-');
+  temp = temp.replace(/_D_/g, '.');
   temp = temp.replace(/_L_/g, '(');
   return temp.replace(/_J_/g, ')');
 };
