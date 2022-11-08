@@ -34,6 +34,12 @@ if (GEN_O_VERSION === 'LIVE') {
   var gen_o_audience = "https://gen-o.eu.auth0.com/api/v2/";
   var gen_o_graphql = "https://graphql.northwestglh.com/v1/graphql";
   var gen_o_application_uri = "https://gen-o.northwestglh.com";
+} else if (GEN_O_VERSION === 'PREPROD') {
+  var gen_o_domain = "gen-o-preprod.eu.auth0.com";
+  var gen_o_client_id = "N6PMijd1fIH9yMfAPbVVRbEtk44jA25d";
+  var gen_o_audience = "https://gen-o-preprod.eu.auth0.com/api/v2/";
+  var gen_o_graphql = "https://preprod-graphql.northwestglh.com/v1/graphql";
+  var gen_o_application_uri = "https://preprod-gen-o.northwestglh.com";
 } else if (GEN_O_VERSION === 'TEST') {
   var gen_o_domain = "gen-o-test.eu.auth0.com";
   var gen_o_client_id = "Kx350GeJFnWb1mYc5H3GjMvG8hrc2OYR";
