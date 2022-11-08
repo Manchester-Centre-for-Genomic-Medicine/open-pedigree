@@ -804,7 +804,7 @@ document.observe('custom:selectize:load:disorders', async function(event) {
 });
 
 document.observe('custom:selectize:load:hpos', async function(event) {
-  // Function to populate selecitzeJS control with ORPHA and ICD-10 genes from Gen-O.
+  // Function to populate selecitzeJS control with HPO terms from Gen-O.
   HPO_TERMS.forEach(function(item) {
     var hpo = new HPOTerm(item.id, item.name);
     item = {
