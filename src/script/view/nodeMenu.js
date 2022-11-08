@@ -95,6 +95,12 @@ var NodeMenu = Class.create({
         insertLocation.insert(_this._generateField[d.type].call(_this, d));
       }
     });
+    
+    // Date picker event queues used to fire only the last on change event after user is inactive for X secs.
+    this._datepickerEventQueue = {
+      'date_of_birth': [],
+      'date_of_death': [],
+    }
 
     // Insert in document
     this.hide();
@@ -104,6 +110,8 @@ var NodeMenu = Class.create({
 
     // Attach pickers
     // date
+    /*
+    // Original XWiki control was replaced with html input type=date 
     var crtYear = new Date().getFullYear();
     window.dateTimePicker = new XWiki.widgets.DateTimePicker({
       year_range: [crtYear - 99, crtYear + 1],
@@ -111,6 +119,7 @@ var NodeMenu = Class.create({
         this._selector.updateSelectedDate({day: date.getDate(), month: date.getMonth(), year : date.getYear() + 1900}, false);
       }
     });
+    */
     // disease
     this.form.select('input.suggest-orphanet').each(function(item) {
       if (!item.hasClassName('initialized')) {
@@ -128,13 +137,17 @@ var NodeMenu = Class.create({
             },
             option: function(item, escape) {
               var div = '<div><table>' +
-              '<tr><td><span class="id disorder">' + 'ORPHA:' + escape(item.id) + '</span></td>' +
+              '<tr><td><span class="id disorder">' + escape(item.id) + '</span></td>' +
               '<td><span class="name">' + escape(item.name) + '</span></td></tr>';
               div += '</table></div>';
               return div;
             },
           },
           onInitialize: function() {
+            // Code to load gene data from Gen-O database (observed in app.js).
+            document.fire('custom:selectize:load:disorders', this);
+            /*
+            // Code to load gene data from HGNC API.
             var _this = this
             jQuery.ajax({
               url: 'https://api.orphacode.org/EN/ClinicalEntity',
@@ -160,6 +173,7 @@ var NodeMenu = Class.create({
                 _this.refreshOptions();
               }
             });
+            */
           },
           onChange: function() {
             this.fieldName = 'disorders';
@@ -471,6 +485,24 @@ var NodeMenu = Class.create({
       _this._updateDisorderColor(event.memo.id, event.memo.color);
     });
 
+    // Update hpo colors
+    this._updateHPOColor = function(id, color) {
+      this.menuBox.select('.field-hpo_positive li input[value="' + id + '"]').each(function(item) {
+        var colorBubble = item.up('li').down('.disorder-color');
+        if (!colorBubble) {
+          colorBubble = new Element('span', {'class' : 'disorder-color'});
+          item.up('li').insert({top : colorBubble});
+        }
+        colorBubble.setStyle({background : color});
+      });
+    }.bind(this);
+    document.observe('hpo:color', function(event) {
+      if (!event.memo || !event.memo.id || !event.memo.color) {
+        return;
+      }
+      _this._updateHPOColor(event.memo.id, event.memo.color);
+    });
+
     // Update gene colors
     this._updateGeneColor = function(id, color) {
       this.menuBox.select('.field-candidate_genes li input[value="' + id + '"]').each(function(item) {
@@ -507,6 +539,21 @@ var NodeMenu = Class.create({
     return result;
   },
 
+  _handleDatePickerChangeEvent : function (field, event, fireEventName) {
+    var _this = this;
+    // Add event to a datepicker queue (date of birth and date of death events are processed separately).
+    _this._datepickerEventQueue[field.name].push(event);
+    var eventNum = _this._datepickerEventQueue[field.name].length;
+    // Wait for X sec and trigger update if no new events were added to the queue.
+    setTimeout(function(eventNum) {
+      if (_this._datepickerEventQueue[field.name].length == eventNum) {
+        document.fire(fireEventName, _this._datepickerEventQueue[field.name].pop());
+        _this._datepickerEventQueue[field.name] = [];
+        field.fire('pedigree:change');
+      }
+    }, 2000, eventNum);
+  },
+
   _attachFieldEventListeners : function (field, eventNames, values) {
     var _this = this;
     eventNames.each(function(eventName) {
@@ -529,14 +576,24 @@ var NodeMenu = Class.create({
           var properties = {};
           properties[method] = _this.fieldMap[field.name].crtValue;
           var event = { 'nodeID': target.getID(), 'properties': properties };
-          document.fire('pedigree:node:setproperty', event);
+          if (field.name == 'date_of_birth' || field.name == 'date_of_death') {
+            _this._handleDatePickerChangeEvent(field, event, 'pedigree:node:setproperty');
+          } else {
+            document.fire('pedigree:node:setproperty', event);
+          }
         } else {
           var properties = {};
           properties[method] = _this.fieldMap[field.name].crtValue;
           var event = { 'nodeID': target.getID(), 'modifications': properties };
-          document.fire('pedigree:node:modify', event);
+          if (field.name == 'date_of_birth' || field.name == 'date_of_death') {
+            _this._handleDatePickerChangeEvent(field, event, 'pedigree:node:modify');
+          } else {
+            document.fire('pedigree:node:modify', event);
+          }
         }
-        field.fire('pedigree:change');
+        if (field.name != 'date_of_birth' && field.name != 'date_of_death') {
+          field.fire('pedigree:change');
+        }
       });
     });
   },
@@ -640,6 +697,8 @@ var NodeMenu = Class.create({
       this._attachFieldEventListeners(text, ['keyup'], [true]);
       return result;
     },
+    /*
+    // Original XWiki control was replaced with html input type=date 
     'date-picker' : function (data) {
       var result = this._generateEmptyField(data);
       var datePicker = new Element('input', {type: 'text', 'class': 'xwiki-date', name: data.name, 'title': data.format, alt : '' });
@@ -648,6 +707,23 @@ var NodeMenu = Class.create({
         return [this.alt && Date.parseISO_8601(this.alt)];
       }.bind(datePicker);
       this._attachFieldEventListeners(datePicker, ['xwiki:date:changed']);
+      return result;
+    },
+    */
+    'date-picker' : function (data) {
+      var result = this._generateEmptyField(data);
+      var datePicker = document.createElement("INPUT");
+      datePicker.setAttribute("type", "date");
+      datePicker.setAttribute("name", data.name);
+      result.insert(datePicker);
+      datePicker._getValue = function() {
+        var date = '';
+        if (this.value) {
+          date = new Date(this.value + 'T00:00:00');
+        }
+        return [date];
+      }.bind(datePicker);
+      this._attachFieldEventListeners(datePicker, ['change']);
       return result;
     },
     'disease-picker' : function (data) {
@@ -979,11 +1055,20 @@ var NodeMenu = Class.create({
         target.value = value;
       }
     },
+    /*
+    // Original XWiki control was replaced with html input type=date 
     'date-picker' : function (container, value) {
       var target = container.down('input[type=text].xwiki-date');
       if (target) {
         target.value = value && value.toFormattedString({'format_mask' : target.title}) || '';
         target.alt = value && value.toISO8601() || '';
+      }
+    },
+    */
+    'date-picker' : function (container, value) {
+      var target = container.down('input[type=date]');
+      if (target) {
+        target.value = value && value.toISO8601().split('T')[0] || '';
       }
     },
     'disease-picker' : function (container, values) {
@@ -998,7 +1083,9 @@ var NodeMenu = Class.create({
             var disorder = new Disorder(v.id, v.value);
             target.selectize.addOption({value: disorder.getDisplayName(), id: disorder.getDesanitizedDisorderID(), name: disorder.getName()});
             target.selectize.addItem(disorder.getDisplayName(), true);
-            _this._updateDisorderColor(v.id, editor.getDisorderLegend().getObjectColor(v.id));
+            if (editor.getDisorderLegend().getShowColors()) {
+              _this._updateDisorderColor(v.id, editor.getDisorderLegend().getObjectColor(v.id));
+            }
           });
         }
       }
@@ -1029,6 +1116,9 @@ var NodeMenu = Class.create({
             var hpoTerm = new HPOTerm(v.id, v.value);
             target.selectize.addOption({value: hpoTerm.getDisplayName(), id: hpoTerm.getDesanitizedID(), name: hpoTerm.getName()});
             target.selectize.addItem(hpoTerm.getDisplayName(), true);
+            if (editor.getHPOLegend().getShowColors()) {
+              _this._updateHPOColor(v.id, editor.getHPOLegend().getObjectColor(v.id));
+            }
           });
         }
       }
@@ -1060,7 +1150,9 @@ var NodeMenu = Class.create({
             // but only symbols are used in gene legend.
             target.selectize.addOption({value: gene.getDisplayName(), id: gene.getID(), name: gene.getSymbol(), group: gene.getGroup()});
             target.selectize.addItem(gene.getDisplayName(), true);
-            _this._updateGeneColor(gene.getSymbol(), editor.getGeneLegend().getObjectColor(gene.getSymbol()));
+            if (editor.getGeneLegend().getShowColors()) {
+              _this._updateGeneColor(gene.getSymbol(), editor.getGeneLegend().getObjectColor(gene.getSymbol()));
+            }
           });
         }
       }

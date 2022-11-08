@@ -15,6 +15,7 @@ import '../public/vendor/phenotips/DateTimePicker.css';
 import '../public/vendor/phenotips/Skin.css';
 
 import HPOTerm from 'pedigree/hpoTerm';
+import Disorder from 'pedigree/disorder';
 
 // Global variable, obtained from URL parameters when opened from Gen-O.
 var specialtyID = null;
@@ -22,9 +23,10 @@ var specialtyID = null;
 var DEV_MODE = false;
 
 var HGNC_GENES = [];
+var GEN_O_DISORDERS = [];
 
 // Expected to be LIVE, TEST, or DEVELOP. Anything else is considered DEVELOP
-const GEN_O_VERSION = 'LIVE';
+const GEN_O_VERSION = 'DEVELOP';
 
 if (GEN_O_VERSION === 'LIVE') {
   var gen_o_domain = "gen-o.eu.auth0.com";
@@ -32,6 +34,12 @@ if (GEN_O_VERSION === 'LIVE') {
   var gen_o_audience = "https://gen-o.eu.auth0.com/api/v2/";
   var gen_o_graphql = "https://graphql.northwestglh.com/v1/graphql";
   var gen_o_application_uri = "https://gen-o.northwestglh.com";
+} else if (GEN_O_VERSION === 'PREPROD') {
+  var gen_o_domain = "gen-o-preprod.eu.auth0.com";
+  var gen_o_client_id = "N6PMijd1fIH9yMfAPbVVRbEtk44jA25d";
+  var gen_o_audience = "https://gen-o-preprod.eu.auth0.com/api/v2/";
+  var gen_o_graphql = "https://preprod-graphql.northwestglh.com/v1/graphql";
+  var gen_o_application_uri = "https://preprod-gen-o.northwestglh.com";
 } else if (GEN_O_VERSION === 'TEST') {
   var gen_o_domain = "gen-o-test.eu.auth0.com";
   var gen_o_client_id = "Kx350GeJFnWb1mYc5H3GjMvG8hrc2OYR";
@@ -108,7 +116,21 @@ document.observe('dom:loaded', async function () {
     return result.data?.gene
   }
 
+  const getDisorders = async function () {
+    const query = `
+      query GetDisorderApi {
+        disorder_api {
+          ontology_id
+          name
+        }
+      }
+    `;
+    const result = await graphql({ query });
+    return result.data?.disorder_api
+  }
+
   HGNC_GENES = await getGenes();
+  GEN_O_DISORDERS = await getDisorders();
 
   const urlParams = new URLSearchParams(window.location.search);
 
@@ -288,9 +310,9 @@ document.observe('dom:loaded', async function () {
             ? 'deceased'
             : 'alive'
         );
-        var parsedBirthDate = new Date(result.data?.individual[0]?.date_of_birth);
+        var parsedBirthDate = new Date(result.data?.individual[0]?.date_of_birth + 'T00:00:00');
         node.setBirthDate(parsedBirthDate.toDateString());
-        var parsedDeathDate = new Date(result.data?.individual[0]?.date_of_death);
+        var parsedDeathDate = new Date(result.data?.individual[0]?.date_of_death + 'T00:00:00');
         node.setDeathDate(parsedDeathDate.toDateString());
         node.setGender(result.data?.individual[0]?.sex);
         var hpos = [];
@@ -339,7 +361,7 @@ document.observe('dom:loaded', async function () {
               ? 'deceased'
               : 'alive'
           );
-          var parsedBirthDate = new Date(result.data.individual?.birthDate);
+          var parsedBirthDate = new Date(result.data.individual?.birthDate + 'T00:00:00');
           node.setBirthDate(parsedBirthDate.toDateString());
           var parsedDeathDate = new Date(result.data.individual?.deceasedDateTime);
           node.setDeathDate(parsedDeathDate.toDateString());
@@ -752,6 +774,20 @@ document.observe('custom:selectize:load:genes', async function(event) {
       name: gene.getSymbol(),
       value: gene.getDisplayName(),
       group: gene.getGroup(),
+    }
+    event.memo.addOption(item);
+  });
+  event.memo.refreshOptions();
+});
+
+document.observe('custom:selectize:load:disorders', async function(event) {
+  // Function to populate selecitzeJS control with ORPHA and ICD-10 genes from Gen-O.
+  GEN_O_DISORDERS.forEach(function(item) {
+    var disorder = new Disorder(item.ontology_id, item.name);
+    item = {
+      id: disorder.getDesanitizedDisorderID(),
+      name: disorder.getName(),
+      value: disorder.getDisplayName(),
     }
     event.memo.addOption(item);
   });
