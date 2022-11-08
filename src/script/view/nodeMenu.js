@@ -373,6 +373,10 @@ var NodeMenu = Class.create({
             },
           },
           onInitialize: function() {
+            // Code to load HPO data from Gen-O database (observed in app.js).
+            document.fire('custom:selectize:load:hpos', this);
+            /*
+            // Code to load hpo data from HPO API.
             var _this = this
             jQuery.ajax({
               url: 'https://hpo.jax.org/api/hpo/search/?q=HP%3A&max=-1&offset=0&category=terms',
@@ -391,6 +395,7 @@ var NodeMenu = Class.create({
                 _this.refreshOptions();
               }
             });
+            */
           },
           onChange: function() {
             this.fieldName = 'hpo_positive';

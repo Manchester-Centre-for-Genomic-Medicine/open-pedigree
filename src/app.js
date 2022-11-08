@@ -24,6 +24,7 @@ var DEV_MODE = false;
 
 var HGNC_GENES = [];
 var GEN_O_DISORDERS = [];
+var HPO_TERMS = [];
 
 // Expected to be LIVE, TEST, or DEVELOP. Anything else is considered DEVELOP
 const GEN_O_VERSION = 'DEVELOP';
@@ -123,8 +124,22 @@ document.observe('dom:loaded', async function () {
     return result.data?.disorder_api
   }
 
+  const getHPOs = async function () {
+    const query = `
+      query GetHpoApi {
+        hpo {
+          id
+          name
+        }
+      }
+    `;
+    const result = await graphql({ query });
+    return result.data?.hpo
+  }
+
   HGNC_GENES = await getGenes();
   GEN_O_DISORDERS = await getDisorders();
+  HPO_TERMS = await getHPOs();
 
   const urlParams = new URLSearchParams(window.location.search);
 
@@ -782,6 +797,20 @@ document.observe('custom:selectize:load:disorders', async function(event) {
       id: disorder.getDesanitizedDisorderID(),
       name: disorder.getName(),
       value: disorder.getDisplayName(),
+    }
+    event.memo.addOption(item);
+  });
+  event.memo.refreshOptions();
+});
+
+document.observe('custom:selectize:load:hpos', async function(event) {
+  // Function to populate selecitzeJS control with ORPHA and ICD-10 genes from Gen-O.
+  HPO_TERMS.forEach(function(item) {
+    var hpo = new HPOTerm(item.id, item.name);
+    item = {
+      id: hpo.getDesanitizedID(),
+      name: hpo.getName(),
+      value: hpo.getDisplayName(),
     }
     event.memo.addOption(item);
   });
