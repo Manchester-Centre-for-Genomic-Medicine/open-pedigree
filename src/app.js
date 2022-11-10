@@ -609,8 +609,8 @@ document.observe('dom:loaded', async function () {
       first_name: node.getFirstName(),
       last_name: node.getLastName(),
       deceased: node.getLifeStatus() == 'deceased' ? true : false,
-      date_of_birth: node.getBirthDate() ? node.getBirthDate().toISOString().split('T')[0] : null,
-      date_of_death: node.getDeathDate() ? node.getDeathDate().toISOString().split('T')[0] : null,
+      date_of_birth: node.getBirthDate() ? node.getBirthDate().toISO8601().split('T')[0] : null,
+      date_of_death: node.getDeathDate() ? node.getDeathDate().toISO8601().split('T')[0] : null,
       sex: node.getGender(true)
     }
     const result = await graphql({ query, variables });
@@ -667,7 +667,7 @@ document.observe('dom:loaded', async function () {
       ]);
     }
     if (event.memo.node.getBirthDate()) {
-      var newBirthDate = event.memo.node.getBirthDate().toISOString().split('T')[0];
+      var newBirthDate = event.memo.node.getBirthDate().toISO8601().split('T')[0];
     } else {
       var newBirthDate = null;
     }
@@ -679,7 +679,7 @@ document.observe('dom:loaded', async function () {
       ]);
     }
     if (event.memo.node.getDeathDate()) {
-      var newDeathDate = event.memo.node.getDeathDate().toISOString().split('T')[0];
+      var newDeathDate = event.memo.node.getDeathDate().toISO8601().split('T')[0];
     } else {
       var newDeathDate = null;
     }
