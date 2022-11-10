@@ -24,6 +24,7 @@ var DEV_MODE = false;
 
 var HGNC_GENES = [];
 var GEN_O_DISORDERS = [];
+var HPO_TERMS = [];
 
 // Expected to be LIVE, TEST, or DEVELOP. Anything else is considered DEVELOP
 const GEN_O_VERSION = 'DEVELOP';
@@ -129,8 +130,22 @@ document.observe('dom:loaded', async function () {
     return result.data?.disorder_api
   }
 
+  const getHPOs = async function () {
+    const query = `
+      query GetHpoApi {
+        hpo {
+          id
+          name
+        }
+      }
+    `;
+    const result = await graphql({ query });
+    return result.data?.hpo
+  }
+
   HGNC_GENES = await getGenes();
   GEN_O_DISORDERS = await getDisorders();
+  HPO_TERMS = await getHPOs();
 
   const urlParams = new URLSearchParams(window.location.search);
 
@@ -345,7 +360,9 @@ document.observe('dom:loaded', async function () {
             variants.push(formatted_text);
           }
         });
-        node.setComments(variants.join('\r\n'));
+        if (variants.length > 0) {
+          node.setComments(variants.join('\r\n') + '\r\n' + node.getComments());
+        } 
         disableGenOButtons(true, false, false, false);
       } else {
         var result = await getDemographicsPDS(nhsID);
@@ -592,8 +609,8 @@ document.observe('dom:loaded', async function () {
       first_name: node.getFirstName(),
       last_name: node.getLastName(),
       deceased: node.getLifeStatus() == 'deceased' ? true : false,
-      date_of_birth: node.getBirthDate() ? node.getBirthDate().toISOString().split('T')[0] : null,
-      date_of_death: node.getDeathDate() ? node.getDeathDate().toISOString().split('T')[0] : null,
+      date_of_birth: node.getBirthDate() ? node.getBirthDate().toISO8601().split('T')[0] : null,
+      date_of_death: node.getDeathDate() ? node.getDeathDate().toISO8601().split('T')[0] : null,
       sex: node.getGender(true)
     }
     const result = await graphql({ query, variables });
@@ -650,7 +667,7 @@ document.observe('dom:loaded', async function () {
       ]);
     }
     if (event.memo.node.getBirthDate()) {
-      var newBirthDate = event.memo.node.getBirthDate().toISOString().split('T')[0];
+      var newBirthDate = event.memo.node.getBirthDate().toISO8601().split('T')[0];
     } else {
       var newBirthDate = null;
     }
@@ -662,7 +679,7 @@ document.observe('dom:loaded', async function () {
       ]);
     }
     if (event.memo.node.getDeathDate()) {
-      var newDeathDate = event.memo.node.getDeathDate().toISOString().split('T')[0];
+      var newDeathDate = event.memo.node.getDeathDate().toISO8601().split('T')[0];
     } else {
       var newDeathDate = null;
     }
@@ -788,6 +805,20 @@ document.observe('custom:selectize:load:disorders', async function(event) {
       id: disorder.getDesanitizedDisorderID(),
       name: disorder.getName(),
       value: disorder.getDisplayName(),
+    }
+    event.memo.addOption(item);
+  });
+  event.memo.refreshOptions();
+});
+
+document.observe('custom:selectize:load:hpos', async function(event) {
+  // Function to populate selecitzeJS control with HPO terms from Gen-O.
+  HPO_TERMS.forEach(function(item) {
+    var hpo = new HPOTerm(item.id, item.name);
+    item = {
+      id: hpo.getDesanitizedID(),
+      name: hpo.getName(),
+      value: hpo.getDisplayName(),
     }
     event.memo.addOption(item);
   });
