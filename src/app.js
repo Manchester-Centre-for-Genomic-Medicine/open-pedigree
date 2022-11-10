@@ -360,7 +360,9 @@ document.observe('dom:loaded', async function () {
             variants.push(formatted_text);
           }
         });
-        node.setComments(variants.join('\r\n'));
+        if (variants.length > 0) {
+          node.setComments(variants.join('\r\n') + '\r\n' + node.getComments());
+        } 
         disableGenOButtons(true, false, false, false);
       } else {
         var result = await getDemographicsPDS(nhsID);
