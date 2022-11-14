@@ -325,10 +325,14 @@ document.observe('dom:loaded', async function () {
             ? 'deceased'
             : 'alive'
         );
-        var parsedBirthDate = new Date(result.data?.individual[0]?.date_of_birth + 'T00:00:00');
-        node.setBirthDate(parsedBirthDate.toDateString());
-        var parsedDeathDate = new Date(result.data?.individual[0]?.date_of_death + 'T00:00:00');
-        node.setDeathDate(parsedDeathDate.toDateString());
+        if (result.data?.individual[0]?.date_of_birth) {
+          var parsedBirthDate = new Date(result.data?.individual[0]?.date_of_birth + 'T00:00:00');
+          node.setBirthDate(parsedBirthDate.toDateString());
+        }
+        if (result.data?.individual[0]?.date_of_death) {
+          var parsedDeathDate = new Date(result.data?.individual[0]?.date_of_death + 'T00:00:00');
+          node.setDeathDate(parsedDeathDate.toDateString());
+        }
         node.setGender(result.data?.individual[0]?.sex);
         var hpos = [];
         result.data?.individual[0]?.phenopacket?.phenotypic_features?.each(function(v) {
@@ -378,10 +382,14 @@ document.observe('dom:loaded', async function () {
               ? 'deceased'
               : 'alive'
           );
-          var parsedBirthDate = new Date(result.data.individual?.birthDate + 'T00:00:00');
-          node.setBirthDate(parsedBirthDate.toDateString());
-          var parsedDeathDate = new Date(result.data.individual?.deceasedDateTime);
-          node.setDeathDate(parsedDeathDate.toDateString());
+          if (result.data.individual?.birthDate) {
+            var parsedBirthDate = new Date(result.data.individual?.birthDate + 'T00:00:00');
+            node.setBirthDate(parsedBirthDate.toDateString());
+          }
+          if (result.data.individual?.deceasedDateTime) {
+            var parsedDeathDate = new Date(result.data.individual?.deceasedDateTime);
+            node.setDeathDate(parsedDeathDate.toDateString());
+          }
           node.setGender(result.data.individual.gender);
         }
         disableGenOButtons(false, true, true, false);
