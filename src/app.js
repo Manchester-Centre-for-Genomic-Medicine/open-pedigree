@@ -372,11 +372,9 @@ document.observe('dom:loaded', async function () {
         var result = await getDemographicsPDS(nhsID);
         if (result.data?.individual) {
           clearNodeDemographics(node, false);
-          var names = result.data.individual.name.sort(function(a, b) {
-            return new Date(b.period.start) - new Date(a.period.start);
-          });
-          node.setFirstName(names[0]?.given[0]);
-          node.setLastName(names[0]?.family);
+          var names = result.data.individual.name
+          node.setFirstName(names[names.length - 1]?.given[0]);
+          node.setLastName(names[names.length - 1]?.family);
           node.setLifeStatus(
             result.data.individual?.deceased
               ? 'deceased'
