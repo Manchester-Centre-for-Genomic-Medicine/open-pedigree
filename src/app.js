@@ -256,6 +256,73 @@ document.observe('dom:loaded', async function () {
   const COHORT = await getFamilyCohortData(urlParams.get('phenopacket_id'));
   console.log(COHORT);
 
+  const addToFamilyCohort = async function (individualId, cohortId) {
+    const query = `
+      mutation InsertCohortMemberFromOpenPedigree(
+        $cohort_id: uuid!,
+        $individual_id: uuid!
+      ) {
+        cohort_member: insert_cohort_member_one(
+          object: {
+            cohort_id: $cohort_id,
+            individual_id: $individual_id
+          },
+          on_conflict: {
+            constraint: individual_appears_once_per_cohort,
+            update_columns: []
+          }
+        ) {
+          id
+        }
+      }
+    `;
+    const variables = {
+      cohort_id: cohortId,
+      individual_id: individualId,
+    };
+    const result = graphql({ query, variables });
+
+    return result?.data;
+  };
+
+  const removeFromFamilyCohort = async function (phenopacketId, cohortId) {
+    const query = `
+      mutation RemoveCohortMemberFromOpenPedigree(
+        $cohortId: uuid!,
+        $phenopacketId: uuid!
+      ) {
+        cohort_member: delete_cohort_member(
+          where: {
+            _and: {
+              cohort_id: {_eq: $cohortId},
+              individual: {
+                phenopacket_id: {_eq: $phenopacketId}
+              }
+            }
+          }
+        ) {
+          affected_rows
+          returning {
+            cohort {
+              cohort_members: cohort_members_aggregate {
+                aggregate {
+                  count
+                }
+              }
+            }
+          }
+        }
+      }
+    `;
+    const variables = {
+      cohortId,
+      phenopacketId,
+    };
+    const result = graphql({ query, variables });
+
+    return result?.data;
+  };
+
   const editor = new PedigreeEditor({
     returnUrl: 'javascript:history.go(-2)',
     autosave: true,
@@ -733,14 +800,16 @@ document.observe('dom:loaded', async function () {
       var interpretationID = await insertInterpretation(phenopacketID);
       var caseStetusID = await insertCaseHistory(phenopacketID);
       var hpoResult = await updateExternalHPO(phenopacketID, node.getHPO());
-      if (phenopacketID && individualID && interpretationID && caseStetusID) {
+      var cohortId = await addToFamilyCohort(individualID, COHORT.cohort_id);
+      if (phenopacketID && individualID && interpretationID && caseStetusID && cohortId) {
         console.log('Gen-O patient record was successfully created');
       } else {
-        console.log('Failed to create Gen-O record patient record.');
+        console.error('Failed to create Gen-O record patient record.');
         console.log('phenopacketID:', phenopacketID);
         console.log('individualID:', individualID);
         console.log('interpretationID:', interpretationID);
         console.log('caseStetusID:', caseStetusID);
+        console.log('cohort id', cohortId);
       }
       disableGenOButtons(true, false, false, true);
     } else {
