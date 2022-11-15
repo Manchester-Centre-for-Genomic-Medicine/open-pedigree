@@ -27,7 +27,7 @@ var GEN_O_DISORDERS = [];
 var HPO_TERMS = [];
 
 // Expected to be LIVE, TEST, or DEVELOP. Anything else is considered DEVELOP
-const GEN_O_VERSION = 'DEVELOP';
+const GEN_O_VERSION = 'LOCAL';
 
 if (GEN_O_VERSION === 'LIVE') {
   var gen_o_domain = "gen-o.eu.auth0.com";
@@ -143,11 +143,118 @@ document.observe('dom:loaded', async function () {
     return result.data?.hpo
   }
 
+  const getFamilyCohortData = async function (phenopacketId) {
+    const getFamily = async function (phenopacketId) {
+      const query = `
+        query GetFamilyDataForOpenPedigree($phenopacket_id: uuid!) {
+          family(where: {phenopacket_id: {_eq: $phenopacket_id}}) {
+            id
+            family_identifier
+            cohort_id
+            phenopacket {
+              individual {
+                id
+              }
+            }
+          }
+        }
+      `;
+      const variables = {
+        phenopacket_id: phenopacketId
+      };
+      const result = await graphql({query, variables});
+      if (result?.data?.family?.length > 0) {
+        return result.data.family[0];
+      }
+      return null;
+    };
+    const createCohort = async function (individualId, clinicalFamilyRecordIdentifier) {
+      const query = `
+        mutation InsertCohort(
+          $individual_id: uuid!,
+          $clinical_family_record_identifier: String!
+        ) {
+          cohort: insert_cohort_one(
+            object: {
+              name: $clinical_family_record_identifier,
+              type: "Family",
+              share_status: "Internal",
+              cohort_members: {
+                data: {
+                  individual_id: $individual_id
+                }
+              }
+            }
+          ) {
+            id
+          }
+        }
+      `;
+      const variables = {
+        individual_id: individualId,
+        clinical_family_record_identifier: clinicalFamilyRecordIdentifier,
+      };
+
+      const result = await graphql({ query, variables });
+
+      return result.data.cohort;
+    };
+    const updateFamily = async function (familyId, cohortId) {
+      const query = `
+        mutation UpdateFamilyCohort(
+          $family_id: uuid!,
+          $cohort_id: uuid!
+        ) {
+          family: update_family_by_pk(
+            pk_columns: {id: $family_id},
+            _set: {
+              cohort_id: $cohort_id
+            }
+          ) {
+            id
+            cohort_id
+            family_identifier
+            phenopacket {
+              individual {
+                id
+              }
+            }
+          }
+        }
+      `;
+      const variables = {
+        family_id: familyId,
+        cohort_id: cohortId,
+      };
+      const result = await graphql({ query, variables });
+
+      return result?.data?.family;
+    }
+
+    const family = await getFamily(phenopacketId);
+    
+    if (!family) {
+      return null;
+    }
+  
+    if (!!family.cohort_id) {
+      return family;
+    }
+
+    const cohort = await createCohort(
+      family.phenopacket.individual.id,
+      family.family_identifier,
+    );
+    return updateFamily(family.id, cohort.id);
+  };
+
+  const urlParams = new URLSearchParams(window.location.search);
+
   HGNC_GENES = await getGenes();
   GEN_O_DISORDERS = await getDisorders();
   HPO_TERMS = await getHPOs();
-
-  const urlParams = new URLSearchParams(window.location.search);
+  const COHORT = await getFamilyCohortData(urlParams.get('phenopacket_id'));
+  console.log(COHORT);
 
   const editor = new PedigreeEditor({
     returnUrl: 'javascript:history.go(-2)',
