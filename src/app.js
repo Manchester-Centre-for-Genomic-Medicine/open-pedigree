@@ -406,6 +406,7 @@ document.observe('dom:loaded', async function () {
             primary_identifier: {_eq: $primaryIdentifier}
           }
       ) {
+          id
           date_of_birth
           date_of_death
           deceased
@@ -485,12 +486,18 @@ document.observe('dom:loaded', async function () {
   }
 
   const updateNodeOnExternalIDChange = async function (node) {
+    const oldPhenopacketID = node.getPhenopacketID();
     node.setPhenopacketID('');
     if(node.isNHSNumber(node.getExternalID())) {
       var nhsID = node.getExternalID().replaceAll(' ', '');
       var result = await getDemographicsGenO(nhsID);
+      
       if (result.data?.individual[0]) {
         clearNodeDemographics(node, true);
+        if (oldPhenopacketID !== result.data?.individual[0]?.phenopacket_id && !!oldPhenopacketID) {
+          removeFromFamilyCohort(oldPhenopacketID, COHORT.cohort_id);
+        }
+        addToFamilyCohort(result.data.individual[0].id, COHORT.cohort_id);
         node.setFirstName(result.data?.individual[0]?.first_name);
         node.setLastName(result.data?.individual[0]?.last_name);
         node.setPhenopacketID(result.data?.individual[0]?.phenopacket_id);
