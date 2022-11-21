@@ -318,7 +318,7 @@ var PartnershipVisuals = Class.create(AbstractNodeVisuals, {
      *
      * @method updateChildhubConnection
      */
-  updateChildhubConnection: function() {
+  updateChildhubConnection: function(updateChildlessStatus = true) {
     this._childhubConnection && this._childhubConnection.remove();
 
     var twinCommonVerticalPieceLength = PedigreeEditorParameters.attributes.twinCommonVerticalLength;
@@ -334,7 +334,13 @@ var PartnershipVisuals = Class.create(AbstractNodeVisuals, {
 
     // draw child edges from childhub
     var children = positionedGraph.getRelationshipChildrenSortedByOrder(id);
-
+    
+    // Unless executed with updateChildlessStatus = false, set overwrite childless status of a couple with no children.
+    if (updateChildlessStatus && children.length == 0) {
+      this.getNode()._childlessStatus = 'childless'
+      this.updateChildlessShapes();
+    }
+    
     var leftmostX  = this.getX();
     var rightmostX = this.getX();
 
@@ -411,14 +417,20 @@ var PartnershipVisuals = Class.create(AbstractNodeVisuals, {
     }
 
     editor.getView().drawLineWithCrossings( id, leftmostX, childlineY, rightmostX, childlineY, PedigreeEditorParameters.attributes.partnershipLines);
-    editor.getView().drawLineWithCrossings( id, this.getX(), this.getY(), this.getX(), childlineY, PedigreeEditorParameters.attributes.partnershipLines);
-
+    if (children.length > 0) {
+      editor.getView().drawLineWithCrossings( id, this.getX(), this.getY(), this.getX(), childlineY, PedigreeEditorParameters.attributes.partnershipLines);
+    }
     //draw small non-functional childhub junction orb
     if (numPregnancies > 1) {
       editor.getPaper().circle(this.getX(), childlineY, PedigreeEditorParameters.attributes.partnershipRadius/2).attr({fill: '#666666', stroke: '#888888', 'stroke-width':1, 'opacity': 1});
     }
 
     this._childhubConnection = editor.getPaper().setFinish();
+
+    if (updateChildlessStatus && children.length == 0) {
+      this.getHoverBox().regenerateHandles();
+    }
+
   },
 
   /**
