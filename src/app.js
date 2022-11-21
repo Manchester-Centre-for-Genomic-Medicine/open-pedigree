@@ -232,12 +232,8 @@ document.observe('dom:loaded', async function () {
     }
 
     const family = await getFamily(phenopacketId);
-    
-    if (!family) {
-      return null;
-    }
   
-    if (!!family.cohort_id) {
+    if (!!family?.cohort_id) {
       return family;
     }
 
@@ -494,6 +490,7 @@ document.observe('dom:loaded', async function () {
       
       if (result.data?.individual[0]) {
         clearNodeDemographics(node, true);
+
         if (oldPhenopacketID !== result.data?.individual[0]?.phenopacket_id && !!oldPhenopacketID) {
           removeFromFamilyCohort(oldPhenopacketID, COHORT.cohort_id);
         }
