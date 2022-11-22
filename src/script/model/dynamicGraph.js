@@ -316,6 +316,7 @@ DynamicPositionedGraph.prototype = {
     } else if (this.isPerson(v)) {
       //var children = ...
       //TODO
+      console.log('Missing functionality in "hasNonPlaceholderNonAdoptedChildren" function')
     }
 
     return false;
@@ -463,12 +464,15 @@ DynamicPositionedGraph.prototype = {
 
     if (this.isPerson(v)) {
       // special case: removing the only child also removes the relationship
+      // Disabled to allow childless couples.
+      /*
       if (this.DG.GG.getInEdges(v).length != 0) {
         var chhub = this.DG.GG.getInEdges(v)[0];
         if (this.DG.GG.getOutEdges(chhub).length == 1) {
           removedList[ this.DG.GG.getInEdges(chhub)[0] ] = true;
         }
       }
+      */
 
       // also remove all relationships by this person
       var allRels = this.DG.GG.getAllRelationships(v);
@@ -524,7 +528,7 @@ DynamicPositionedGraph.prototype = {
 
     return affected;
   },
-
+  
   _debugPrintAll: function( headerMessage ) {
   },
 
@@ -2594,8 +2598,11 @@ Heuristics.prototype = {
 
         // First try easy options: moving nodes without moving any other nodes (works in most cases and is fast)
 
+        if (!childInfo) {
+          // Do nothing for childless couples
+        }
         // relationship withone child: special case for performance reasons
-        if (childInfo.orderedChildren.length == 1) {
+        else if (childInfo.orderedChildren.length == 1) {
           var childId = childInfo.orderedChildren[0];
           if (xcoord.xcoord[childId] == childhubX) {
             continue;
@@ -2946,6 +2953,10 @@ Heuristics.prototype = {
             var childhubX = xcoord.xcoord[v];
 
             var childInfo = this.analizeChildren(v);
+            // Skip in case of childless couples
+            if (!childInfo) {
+              continue;
+            }
             var childPositionInfo = this._computeDesiredChildhubLocation( childInfo, xcoord );
             if (childhubX >= childPositionInfo.leftX && childhubX <= childPositionInfo.rightX) {
               continue;
@@ -3136,6 +3147,10 @@ Heuristics.prototype = {
 
         // move children as not to break the supposedly nice layout
         var childInfo    = this.analizeChildren(nextV);
+        // Skip in case of childless couples
+        if (!childInfo) {
+          continue
+        }
         var positionInfo = this._computeDesiredChildhubLocation( childInfo, xcoord, nodes, shiftSize );
 
         // no need to move anything else when parent line is either above the mid-point between the leftmost and rightmost child

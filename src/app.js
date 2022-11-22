@@ -909,14 +909,16 @@ document.observe('dom:loaded', async function () {
   });
 
   document.observe('pedigree:node:refresh-gen-o-buttons-status', function(event) {
-    if(event.memo.node.isNHSNumber(event.memo.node.getExternalID())) {
-      if (event.memo.node.getPhenopacketID()) {
-        disableGenOButtons(true, false, false, true);
+    if (event.memo.node.getType() == 'Person') {
+      if(event.memo.node.isNHSNumber(event.memo.node.getExternalID())) {
+        if (event.memo.node.getPhenopacketID()) {
+          disableGenOButtons(true, false, false, true);
+        } else {
+          disableGenOButtons(false, true, true, true);
+        }
       } else {
-        disableGenOButtons(false, true, true, true);
+        disableGenOButtons(true, true, true, true);
       }
-    } else {
-      disableGenOButtons(true, true, true, true);
     }
   });
 
