@@ -424,9 +424,12 @@ BaseGraph.prototype = {
           throw 'Assertion failed: all virtual nodes may only have an outedge to a virtual node or a relationship';
         }
       } else if (this.isChildhub(v)) {
+        /*
+        // This check was removed to allow creation of childless couples.
         if (outEdges.length < 1) {
           throw 'Assertion failed: all childhubs should have at least one child associated with them';
         }  // if not, re-ranking relationship nodes breaks
+        */
         for (var i = 0; i < outEdges.length; i++) {
           if (!this.isPerson(outEdges[i])) {
             throw 'Assertion failed: childhubs are only connected to people (failed for ' + this.getVertexDescription(v) + ')';
