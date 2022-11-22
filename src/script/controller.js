@@ -141,6 +141,7 @@ var Controller = Class.create({
           editor.getActionStack().addState( event );
         }
       } catch(err) {
+        console.log('REMOVE ERROR:', err)
       }
     };
 
