@@ -128,10 +128,10 @@ document.observe('dom:loaded', async function () {
       };
       const result = await graphql({query: Queries.GET_FAMILY_DATA_FOR_OPEN_PEDIGREE, variables});
 
-      if (result?.data?.family?.length > 0) {
-        return result.data.family[0];
+      if (result?.data?.family) {
+        return result.data.family;
       }
-      return null;
+      throw "Error retrieving or creating family object.";
     };
     const createCohort = async function (individualId, clinicalFamilyRecordIdentifier) {
       const variables = {

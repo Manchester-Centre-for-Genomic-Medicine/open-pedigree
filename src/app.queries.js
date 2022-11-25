@@ -26,8 +26,16 @@ export const GET_HPO_API = `
 `;
 
 export const GET_FAMILY_DATA_FOR_OPEN_PEDIGREE = `
-  query GetFamilyDataForOpenPedigree($phenopacket_id: uuid!) {
-    family(where: {phenopacket_id: {_eq: $phenopacket_id}}) {
+  mutation GetFamilyDataForOpenPedigree($phenopacket_id: uuid!) {
+    family: insert_family_one(
+      object: {
+        phenopacket_id: $phenopacket_id
+      },
+      on_conflict: {
+        constraint: family_phenopacket_id_key,
+        update_columns: [phenopacket_id]
+      }
+    ) {
       id
       family_identifier
       cohort_id
