@@ -17,6 +17,8 @@ import '../public/vendor/phenotips/Skin.css';
 import HPOTerm from 'pedigree/hpoTerm';
 import Disorder from 'pedigree/disorder';
 
+import * as Queries from './app.queries.js';
+
 // Global variable, obtained from URL parameters when opened from Gen-O.
 var specialtyID = null;
 // IMPORTANT! Don't forget to change to false before commiting to github!
@@ -105,128 +107,48 @@ document.observe('dom:loaded', async function () {
   };
   
   const getGenes = async function () {
-    const query = `
-      query GetGene {
-        gene(where: {source: {_eq: "HGNC"}}) {
-          symbol
-          hgnc_id
-        }
-      }
-    `;
-    const result = await graphql({ query });
+    const result = await graphql({ query: Queries.GET_GENE });
     return result.data?.gene
   }
 
   const getDisorders = async function () {
-    const query = `
-      query GetDisorderApi {
-        disorder_api {
-          ontology_id
-          name
-        }
-      }
-    `;
-    const result = await graphql({ query });
+    const result = await graphql({ query: Queries.GET_DISORDER_API });
     return result.data?.disorder_api
   }
 
   const getHPOs = async function () {
-    const query = `
-      query GetHpoApi {
-        hpo {
-          id
-          name
-        }
-      }
-    `;
-    const result = await graphql({ query });
+    const result = await graphql({ query: Queries.GET_HPO_API });
     return result.data?.hpo
   }
 
   const getFamilyCohortData = async function (phenopacketId) {
     const getFamily = async function (phenopacketId) {
-      const query = `
-        query GetFamilyDataForOpenPedigree($phenopacket_id: uuid!) {
-          family(where: {phenopacket_id: {_eq: $phenopacket_id}}) {
-            id
-            family_identifier
-            cohort_id
-            phenopacket {
-              individual {
-                id
-              }
-            }
-          }
-        }
-      `;
       const variables = {
         phenopacket_id: phenopacketId
       };
-      const result = await graphql({query, variables});
+      const result = await graphql({query: Queries.GET_FAMILY_DATA_FOR_OPEN_PEDIGREE, variables});
+
       if (result?.data?.family?.length > 0) {
         return result.data.family[0];
       }
       return null;
     };
     const createCohort = async function (individualId, clinicalFamilyRecordIdentifier) {
-      const query = `
-        mutation InsertCohort(
-          $individual_id: uuid!,
-          $clinical_family_record_identifier: String!
-        ) {
-          cohort: insert_cohort_one(
-            object: {
-              name: $clinical_family_record_identifier,
-              type: "Family",
-              share_status: "Internal",
-              cohort_members: {
-                data: {
-                  individual_id: $individual_id
-                }
-              }
-            }
-          ) {
-            id
-          }
-        }
-      `;
       const variables = {
         individual_id: individualId,
         clinical_family_record_identifier: clinicalFamilyRecordIdentifier,
       };
 
-      const result = await graphql({ query, variables });
+      const result = await graphql({ query: Queries.INSERT_COHORT, variables });
 
       return result.data.cohort;
     };
     const updateFamily = async function (familyId, cohortId) {
-      const query = `
-        mutation UpdateFamilyCohort(
-          $family_id: uuid!,
-          $cohort_id: uuid!
-        ) {
-          family: update_family_by_pk(
-            pk_columns: {id: $family_id},
-            _set: {
-              cohort_id: $cohort_id
-            }
-          ) {
-            id
-            cohort_id
-            family_identifier
-            phenopacket {
-              individual {
-                id
-              }
-            }
-          }
-        }
-      `;
       const variables = {
         family_id: familyId,
         cohort_id: cohortId,
       };
-      const result = await graphql({ query, variables });
+      const result = await graphql({ query: Queries.UPDATE_FAMILY_COHORT, variables });
 
       return result?.data?.family;
     }
@@ -253,68 +175,21 @@ document.observe('dom:loaded', async function () {
   console.log(COHORT);
 
   const addToFamilyCohort = async function (individualId, cohortId) {
-    const query = `
-      mutation InsertCohortMemberFromOpenPedigree(
-        $cohort_id: uuid!,
-        $individual_id: uuid!
-      ) {
-        cohort_member: insert_cohort_member_one(
-          object: {
-            cohort_id: $cohort_id,
-            individual_id: $individual_id
-          },
-          on_conflict: {
-            constraint: individual_appears_once_per_cohort,
-            update_columns: []
-          }
-        ) {
-          id
-        }
-      }
-    `;
     const variables = {
       cohort_id: cohortId,
       individual_id: individualId,
     };
-    const result = graphql({ query, variables });
+    const result = graphql({ query: Queries.INSERT_COHORT_MEMBER_FROM_OPEN_PEDIGREE, variables });
 
     return result?.data;
   };
 
   const removeFromFamilyCohort = async function (phenopacketId, cohortId) {
-    const query = `
-      mutation RemoveCohortMemberFromOpenPedigree(
-        $cohortId: uuid!,
-        $phenopacketId: uuid!
-      ) {
-        cohort_member: delete_cohort_member(
-          where: {
-            _and: {
-              cohort_id: {_eq: $cohortId},
-              individual: {
-                phenopacket_id: {_eq: $phenopacketId}
-              }
-            }
-          }
-        ) {
-          affected_rows
-          returning {
-            cohort {
-              cohort_members: cohort_members_aggregate {
-                aggregate {
-                  count
-                }
-              }
-            }
-          }
-        }
-      }
-    `;
     const variables = {
       cohortId,
       phenopacketId,
     };
-    const result = graphql({ query, variables });
+    const result = graphql({ query: Queries.REMOVE_COHORT_MEMBER_FROM_OPEN_PEDIGREE, variables });
 
     return result?.data;
   };
@@ -333,19 +208,11 @@ document.observe('dom:loaded', async function () {
           specialtyID = '967e0a13-81aa-48f2-8bea-ce0111ddfc94';
         }
         if (urlParams.has('phenopacket_id')) {
-          const query = `
-            query GetOpenPedigreeData($phenopacketId: uuid!) {
-              pedigree:open_pedigree_data(where: {phenopacket_id: {_eq: $phenopacketId}}) {
-                id
-                rawData: pedigree_data
-              }
-            }
-          `;
           const variables = {
             phenopacketId: urlParams.get('phenopacket_id')
           };
           const result = await graphql({
-            query,
+            query: Queries.GET_OPEN_PEDIGREE_DATA,
             variables
           });
 
@@ -360,25 +227,6 @@ document.observe('dom:loaded', async function () {
       },
       save: async ({ jsonData, svgData, setSaveInProgress }) => {
         //setSaveInProgress(true);
-        const query = `
-          mutation UpdateOpenPedigreeData(
-            $phenopacketId: uuid!,
-            $rawData: jsonb!
-          ) {
-            insert_family_one(
-              object: {
-                phenopacket_id: $phenopacketId,
-                raw_open_pedigree_data: $rawData
-              },
-              on_conflict: {
-                constraint: family_phenopacket_id_key,
-                update_columns: raw_open_pedigree_data
-              }
-            ) {
-              id
-            }
-          }
-        `;
         const variables = {
           phenopacketId: urlParams.get('phenopacket_id'),
           rawData: {
@@ -386,77 +234,25 @@ document.observe('dom:loaded', async function () {
             jsonData,
           },
         };
-        const result = await graphql({query, variables});
+        const result = await graphql({query: Queries.UPDATE_OPEN_PEDIGREE_DATA, variables});
         //setSaveInProgress(false);
       },
     }
   });
 
   const getDemographicsGenO = async function (nhsID) {
-    const query = `
-      query GetDemographics(
-        $primaryIdentifier: String!
-      ) {
-        individual(
-          where: {
-            primary_identifier: {_eq: $primaryIdentifier}
-          }
-      ) {
-          id
-          date_of_birth
-          date_of_death
-          deceased
-          first_name
-          last_name
-          primary_identifier
-          sex
-          phenopacket_id
-          phenopacket {
-            phenotypic_features(where:{presence: {_eq: "PRESENT"}}) {
-              hpo {
-                id
-                name
-              }
-            }
-            genomic_interpretations {
-              display_text
-              report_category
-              pathogenicity_text
-              pathogenicity_score
-            }
-          }
-        }
-      }
-    `;
     const variables = {
       primaryIdentifier: nhsID,
     };
-    const result = await graphql({ query, variables });
+    const result = await graphql({ query: Queries.GET_DEMOGRAPHICS, variables });
     return result;
   }
 
   const getDemographicsPDS = async function (nhsID) {
-    const query = `
-      query GetPatientDemographicsFromSpine($nhsNumber:String!) {
-        individual:getPatientFromFHIR(id:$nhsNumber) {
-          birthDate
-          deceased
-          deceasedDateTime
-          name {
-            given
-            family
-            period {
-              start
-            }
-          }
-          gender
-        }
-      }
-    `;
     const variables = {
       nhsNumber: nhsID,
     };
-    const result = await graphql({ query, variables });
+    const result = await graphql({ query: Queries.GET_PATIENT_DEMOGRAPHICS_FROM_SPINE, variables });
     return result;
   }
 
@@ -583,23 +379,10 @@ document.observe('dom:loaded', async function () {
   });
 
   const getPhenopacketID = async function (nhsID) {
-    const query = `
-      query GetDemographics(
-        $primaryIdentifier: String!
-      ) {
-        individual(
-          where: {
-            primary_identifier: {_eq: $primaryIdentifier}
-          }
-      ) {
-          phenopacket_id
-        }
-      }
-    `;
     const variables = {
       primaryIdentifier: nhsID,
     };
-    const result = await graphql({ query, variables });
+    const result = await graphql({ query: Queries.GET_DEMOGRAPHICS, variables });
     return result.data?.individual[0]?.phenopacket_id;
   }
 
@@ -613,55 +396,14 @@ document.observe('dom:loaded', async function () {
       linkedHpoTerms.push({ phenopacket_id: phenopacketId, hpo_id: hpoID, presence: "PRESENT" });
       linkedHpoIds.push(hpoID);
     });
-
-    const query = `
-      mutation UpdatePhenotypicFeaturesViaPedigree(
-        $phenopacketId: uuid!,
-        $hpoTerms: [hpo_insert_input!]! = {},
-        $linkedHpoTerms: [phenotypic_feature_insert_input!]! = {},
-        $linkedHpoIds: [String!]! = ""
-      ) {
-        insert_hpo(
-          objects: $hpoTerms,
-          on_conflict: {
-            constraint: hpo_pkey,
-            update_columns: []
-          }
-        ) {
-          affected_rows
-        }
-        insert_phenotypic_feature(
-          objects: $linkedHpoTerms,
-          on_conflict: {
-            constraint: phenotypic_feature_hpo_id_phenopacket_id_key,
-            update_columns: []
-          }
-        ) {
-          affected_rows
-          returning {
-            hpo {
-              id
-              name
-            }
-          }
-        }
-        delete_phenotypic_feature(
-          where: {
-            hpo_id: {_nin: $linkedHpoIds},
-            _and: { phenopacket_id: {_eq: $phenopacketId} }
-          }
-        ) {
-          affected_rows
-        }
-      }
-    `;
+    
     const variables = {
       phenopacketId: phenopacketId,
       hpoTerms: hpoTerms,
       linkedHpoTerms: linkedHpoTerms,
       linkedHpoIds: linkedHpoIds,
     };
-    const result = await graphql({ query, variables });
+    const result = await graphql({ query: Queries.UPDATE_PHENOTYPIC_FEATURES_VIA_PEDIGREE, variables });
     return result;
   }
 
@@ -670,123 +412,35 @@ document.observe('dom:loaded', async function () {
   });
 
   const insertPhenopacket = async function () {
-    const query = `
-      mutation InsertPhenopacket {
-        phenopacket:insert_phenopacket_one(
-          object: {}
-        ) {
-          id
-        }
-      }
-    `;
-    const result = await graphql({ query });
+    const result = await graphql({ query: Queries.INSERT_PHENOPACKET });
     return result.data?.phenopacket?.id;
   }
 
   const insertInterpretation = async function (phenopacketID) {
-    const query = `
-      mutation InsertInterpretation(
-        $phenopacket_id: uuid!,
-        $specialty_id: uuid!
-      ) {
-        interpretation:insert_interpretation_one(
-          object:
-            {
-              phenopacket_id: $phenopacket_id,
-              specialty_id: $specialty_id
-            }
-        ) {
-            id
-        }
-      }
-    `;
     const variables = {
       phenopacket_id: phenopacketID,
       specialty_id: specialtyID
     };
-    const result = await graphql({ query, variables });
+    const result = await graphql({ query: Queries.INSERT_INTERPRETATION, variables });
     return result.data?.interpretation?.id;
   }
 
   const insertCaseHistory = async function (phenopacketID, status="Referred", notes="Added via Open Pedigree") {
-    var query = `
-      query GetCaseStatus($status: String! = "Referred") {
-        case_status(where: {status: {_eq: $status}}) {
-          id
-        }
-      }
-    `;
     var variables = {
       status: status
     }
-    var result = await graphql({ query, variables });
+    var result = await graphql({ query: Queries.GET_CASE_STATUS, variables });
     var case_status_id = result.data?.case_status[0]?.id;
-    query = `
-      mutation AddCaseStatus(
-        $phenopacket_id: uuid!,
-        $case_status_id: uuid!,
-        $notes: String
-      ) {
-        case_history:insert_case_history_one(
-          object: {
-            phenopacket_id: $phenopacket_id,
-            case_status_id: $case_status_id,
-            notes: $notes,
-          }
-        ) {
-          id
-        }
-      }
-    `;
     variables = {
       phenopacket_id: phenopacketID,
       case_status_id: case_status_id,
       notes: notes
     };
-    result = await graphql({ query, variables });
+    result = await graphql({ query: Queries.ADD_CASE_STATUS, variables });
     return result.data?.case_history?.id;
   }
 
   const upsertIndividual = async function (node) {
-    const query = `
-      mutation UpsertIndividual(
-        $primary_identifier: String!,
-        $phenopacket_id: uuid!,
-        $first_name: String,
-        $last_name: String,
-        $deceased: Boolean,
-        $date_of_birth: date,
-        $date_of_death: date,
-        $sex: sex
-      ) {
-        individual:insert_individual_one(
-          object: {
-            primary_identifier: $primary_identifier,
-            phenopacket_id: $phenopacket_id,
-            first_name: $first_name,
-            last_name: $last_name,
-            deceased: $deceased,
-            date_of_birth: $date_of_birth,
-            date_of_death: $date_of_death,
-            sex: $sex
-          },
-          on_conflict: {
-            constraint: individual_primary_identifier_key,
-            update_columns: [
-              first_name,
-              last_name,
-              deceased,
-              date_of_birth,
-              date_of_death,
-              sex
-            ]
-          }
-        ) {
-            id
-          }
-        }
-      `;
-
     const variables = {
       primary_identifier: node.getExternalID(true),
       phenopacket_id: node.getPhenopacketID(),
@@ -797,7 +451,7 @@ document.observe('dom:loaded', async function () {
       date_of_death: node.getDeathDate() ? node.getDeathDate().toISO8601().split('T')[0] : null,
       sex: node.getGender(true)
     }
-    const result = await graphql({ query, variables });
+    const result = await graphql({ query: Queries.UPSERT_INDIVIDUAL, variables });
     return result.data?.individual?.id;
   }
 
