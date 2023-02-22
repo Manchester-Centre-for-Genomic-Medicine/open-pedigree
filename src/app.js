@@ -91,6 +91,13 @@ document.observe('dom:loaded', async function () {
     }
   }
 
+  const refreshAccessToken = async function () {
+    await auth0.getTokenSilently();
+  };
+
+  // refresh access token every 5 mins
+  const refreshAccess = window.setInterval(refreshAccessToken, 5 * 1000 * 60 * 5);
+
   const graphql = async (body) => {
     const token = await auth0.getTokenSilently();
     const result = await fetch(gen_o_graphql, {
