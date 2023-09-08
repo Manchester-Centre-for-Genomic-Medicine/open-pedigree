@@ -128,18 +128,19 @@ document.observe('dom:loaded', async function () {
     return result.data?.hpo
   }
 
-  const getFamilyCohortData = async function (phenopacketId) {
-    const getFamily = async function (phenopacketId) {
-      const variables = {
-        phenopacket_id: phenopacketId
-      };
-      const result = await graphql({query: Queries.GET_FAMILY_DATA_FOR_OPEN_PEDIGREE, variables});
-
-      if (result?.data?.family) {
-        return result.data.family;
-      }
-      throw "Error retrieving or creating family object.";
+  const getFamily = async function (phenopacketId) {
+    const variables = {
+      phenopacket_id: phenopacketId
     };
+    const result = await graphql({query: Queries.GET_FAMILY_DATA_FOR_OPEN_PEDIGREE, variables});
+
+    if (result?.data?.family) {
+      return result.data.family;
+    }
+    throw "Error retrieving or creating family object.";
+  };
+
+  const getFamilyCohortData = async function (phenopacketId) {
     const createCohort = async function (individualId, clinicalFamilyRecordIdentifier) {
       const variables = {
         individual_id: individualId,
@@ -233,9 +234,11 @@ document.observe('dom:loaded', async function () {
         }
       },
       save: async ({ jsonData, svgData, setSaveInProgress }) => {
+        const family = await getFamily(urlParams.get('phenopacket_id'));
+
         //setSaveInProgress(true);
         const variables = {
-          phenopacketId: urlParams.get('phenopacket_id'),
+          familyId: family.id,
           rawData: {
             svgData,
             jsonData,
