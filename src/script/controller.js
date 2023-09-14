@@ -1,5 +1,8 @@
 import { cloneObject, Timer } from 'pedigree/model/helpers';
 import PedigreeEditorParameters from 'pedigree/pedigreeEditorParameters';
+import HPOTerm from 'pedigree/hpoTerm';
+import Disorder from 'pedigree/disorder';
+import Gene from 'pedigree/gene';
 
 /**
  * ...
@@ -25,6 +28,79 @@ var Controller = Class.create({
     document.observe('pedigree:person:newsibling',         this.handlePersonNewSibling);
     document.observe('pedigree:person:newpartnerandchild', this.handlePersonNewPartnerAndChild);
     document.observe('pedigree:partnership:newchild',      this.handleRelationshipNewChild);
+    document.observe('pedigree:graph:switch-coloring',     this.handleSwitchColoring);
+  },
+  
+  handleSwitchColoring: function(event) {
+    // Options: 'Disorder', 'Gene', 'HPO'
+    editor.switchColoringSource();
+    if (editor.getColoringSource() == 'Disorder') {
+      editor.getDisorderLegend().setShowColors(true);
+      editor.getGeneLegend().setShowColors(false);
+      editor.getHPOLegend().setShowColors(false);
+    } else if (editor.getColoringSource() == 'Gene') {
+      editor.getDisorderLegend().setShowColors(false);
+      editor.getGeneLegend().setShowColors(true);
+      editor.getHPOLegend().setShowColors(false);
+    } else if (editor.getColoringSource() == 'HPO') {
+      editor.getDisorderLegend().setShowColors(false);
+      editor.getGeneLegend().setShowColors(false);
+      editor.getHPOLegend().setShowColors(true);
+    }
+
+    // Refresh all nodes
+
+    // Disorders
+    var nodes = editor.getDisorderLegend().getAllNodeObjects();
+    var nodeDisorders = {}
+    for (const [nodeID, disorderDataList] of Object.entries(nodes)) {
+      var node = editor.getView().getNode(nodeID);
+      nodeDisorders[nodeID] = []
+      disorderDataList.each(function(v) {
+        // v is [id, name] array
+        nodeDisorders[nodeID].push(new Disorder(v[0], v[1]));
+        node.removeDisorder(v[0]);
+      });
+    }
+    for (const [nodeID, disorders] of Object.entries(nodeDisorders)) {
+      var node = editor.getView().getNode(nodeID);
+      node.setDisorders(disorders);
+    }
+
+    // Genes
+    var nodes = editor.getGeneLegend().getAllNodeObjects();
+    var nodeGenes = {}
+    for (const [nodeID, geneDataList] of Object.entries(nodes)) {
+      var node = editor.getView().getNode(nodeID);
+      nodeGenes[nodeID] = []
+      geneDataList.each(function(v) {
+        // v is [id, name] array
+        var gene = new Gene(editor.getGeneLegend().getHGNCID(v[1]), v[1]);
+        nodeGenes[nodeID].push(gene);
+        node.removeGene(gene);
+      });
+    }
+    for (const [nodeID, genes] of Object.entries(nodeGenes)) {
+      var node = editor.getView().getNode(nodeID);
+      node.setGenes(genes);
+    }
+
+    // HPOs
+    var nodes = editor.getHPOLegend().getAllNodeObjects();
+    var nodeHPOs = {}
+    for (const [nodeID, hpoDataList] of Object.entries(nodes)) {
+      var node = editor.getView().getNode(nodeID);
+      nodeHPOs[nodeID] = []
+      hpoDataList.each(function(v) {
+        // v is [id, name] array
+        nodeHPOs[nodeID].push(new HPOTerm(v[0], v[1]));
+        node.removeHPO(v[0]);
+      });
+    }
+    for (const [nodeID, hpos] of Object.entries(nodeHPOs)) {
+      var node = editor.getView().getNode(nodeID);
+      node.setHPO(hpos);
+    }
   },
 
   handleUndo: function(event) {
@@ -65,6 +141,7 @@ var Controller = Class.create({
           editor.getActionStack().addState( event );
         }
       } catch(err) {
+        console.log('REMOVE ERROR:', err)
       }
     };
 

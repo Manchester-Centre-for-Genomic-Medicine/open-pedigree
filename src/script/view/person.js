@@ -83,15 +83,15 @@ var Person = Class.create(AbstractPerson, {
      * @return {String}
      */
   _getDateDMY: function(dateObj) {
-    var day = dateObj.getUTCDate();
+    var day = dateObj.getDate();
     if (day < 10) {
       day = '0' + day
     }    
-    var month = dateObj.getUTCMonth() + 1; //months from 1-12
+    var month = dateObj.getMonth() + 1; //months from 1-12
     if (month < 10) {
       month = '0' + month
     }
-    var year = dateObj.getUTCFullYear();
+    var year = dateObj.getFullYear();
     return day + "/" + month + "/" + year;
   },
 
@@ -590,14 +590,24 @@ var Person = Class.create(AbstractPerson, {
      * @return {Array of Strings}
      */
   getAllNodeColors: function() {
+    // Result contains colors only from the colored legends (getShowColors = true).
     var result = [];
-    for (var i = 0; i < this.getDisorders().length; i++) {
-      result.push(editor.getDisorderLegend().getObjectColor(this.getDisorders()[i]));
+    if (editor.getHPOLegend().getShowColors()) {
+      for (var i = 0; i < this.getHPO().length; i++) {
+        result.push(editor.getHPOLegend().getObjectColor(this.getHPO()[i]));
+      }
+    }
+    if (editor.getDisorderLegend().getShowColors()) {
+      for (var i = 0; i < this.getDisorders().length; i++) {
+        result.push(editor.getDisorderLegend().getObjectColor(this.getDisorders()[i]));
+      }
     }
     // Candidate genes are stored in "{ID} | {Symbol}" (e.g. DisplayName) in person object, 
     // but only symbols are used in gene legend.
-    for (var i = 0; i < this.getGeneSymbols().length; i++) {
-      result.push(editor.getGeneLegend().getObjectColor(this.getGeneSymbols()[i]));
+    if (editor.getGeneLegend().getShowColors()) {
+      for (var i = 0; i < this.getGeneSymbols().length; i++) {
+        result.push(editor.getGeneLegend().getObjectColor(this.getGeneSymbols()[i]));
+      }
     }
     return result;
   },
@@ -754,6 +764,7 @@ var Person = Class.create(AbstractPerson, {
     for(var i = 0; i < hpos.length; i++) {
       this.addHPO( hpos[i] );
     }
+    this.getGraphics().updateDisorderShapes();
   },
 
   /**
@@ -777,6 +788,7 @@ var Person = Class.create(AbstractPerson, {
       // Candidate genes are stored in "{ID} | {Symbol}" (e.g. DisplayName) in person object, 
       // but only symbols are used in gene legend.
       editor.getGeneLegend().addCase(gene.getSymbol(), gene.getSymbol(), this.getID());
+      editor.getGeneLegend().addHGNCID(gene.getSymbol(), gene.getID());
       this.getGenes().push(gene.getDisplayName());
     }
   },
