@@ -146,7 +146,7 @@ export const GET_OPEN_PEDIGREE_DATA = `
   query GetOpenPedigreeData($phenopacketId: uuid!) {
     pedigree:family(where: {phenopacket_id: {_eq: $phenopacketId}}) {
       id
-      rawData: combined_pedigree
+      rawData: pedigree
     }
   }
 `;
@@ -156,13 +156,13 @@ export const UPDATE_OPEN_PEDIGREE_DATA = `
     $familyId: uuid!,
     $rawData: jsonb!
   ) {
-    insert_family_pedigree_one(
-      object: {
+    insert_family_pedigree(
+      objects: {
         family_id: $familyId,
         data: $rawData
       }
     ) {
-      id
+      affected_rows
     }
   }
 `;
