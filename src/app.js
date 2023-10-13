@@ -28,8 +28,8 @@ var HGNC_GENES = [];
 var GEN_O_DISORDERS = [];
 var HPO_TERMS = [];
 
-// Expected to be LIVE, TEST, or DEVELOP. Anything else is considered DEVELOP
-const GEN_O_VERSION = 'PREPROD';
+// Expected to be LIVE, PREPROD, TEST, DEVELOP, or LOCAL. Anything else is considered LOCAL
+const GEN_O_VERSION = 'LIVE';
 
 if (GEN_O_VERSION === 'LIVE') {
   var gen_o_domain = "gen-o.eu.auth0.com";
