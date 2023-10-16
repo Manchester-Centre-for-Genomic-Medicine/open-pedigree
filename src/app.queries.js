@@ -143,10 +143,10 @@ export const REMOVE_COHORT_MEMBER_FROM_OPEN_PEDIGREE = `
 `;
 
 export const GET_OPEN_PEDIGREE_DATA = `
-  query GetOpenPedigreeData($phenopacketId: uuid!) {
-    pedigree:family(where: {phenopacket_id: {_eq: $phenopacketId}}) {
+  query GetOpenPedigreeData ($phenopacketId: uuid!) {
+    pedigree: open_pedigree_data(where: {phenopacket_id:{_eq:$phenopacketId}}) {
       id
-      rawData: pedigree
+      rawData: pedigree_data
     }
   }
 `;
