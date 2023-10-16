@@ -198,7 +198,9 @@ document.observe('dom:loaded', async function () {
           });
 
           return onSuccess(
-            result?.data?.pedigree[0]?.rawData?.jsonData ?? null
+            JSON.parse(
+              result?.data?.pedigree[0]?.rawData?.jsonData ?? null
+            )
           );
         } else {
           console.warn('No phenopacket ID has been specified. No data will be saved.')
