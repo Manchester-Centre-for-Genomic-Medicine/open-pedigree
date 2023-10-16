@@ -29,7 +29,7 @@ var GEN_O_DISORDERS = [];
 var HPO_TERMS = [];
 
 // Expected to be LIVE, TEST, or DEVELOP. Anything else is considered DEVELOP
-const GEN_O_VERSION = 'PREPROD';
+const GEN_O_VERSION = 'DEVELOP';
 
 if (GEN_O_VERSION === 'LIVE') {
   var gen_o_domain = "gen-o.eu.auth0.com";
