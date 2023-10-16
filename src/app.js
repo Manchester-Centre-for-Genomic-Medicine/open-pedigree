@@ -198,7 +198,7 @@ document.observe('dom:loaded', async function () {
           });
 
           return onSuccess(
-            JSON.parse(
+            JSON.stringify(
               result?.data?.pedigree[0]?.rawData?.jsonData ?? null
             )
           );
