@@ -29,7 +29,7 @@ var GEN_O_DISORDERS = [];
 var HPO_TERMS = [];
 
 // Expected to be LIVE, TEST, or DEVELOP. Anything else is considered DEVELOP
-const GEN_O_VERSION = 'PREPROD';
+const GEN_O_VERSION = 'LIVE';
 
 if (GEN_O_VERSION === 'LIVE') {
   var gen_o_domain = "gen-o.eu.auth0.com";
@@ -128,18 +128,19 @@ document.observe('dom:loaded', async function () {
     return result.data?.hpo
   }
 
-  const getFamilyCohortData = async function (phenopacketId) {
-    const getFamily = async function (phenopacketId) {
-      const variables = {
-        phenopacket_id: phenopacketId
-      };
-      const result = await graphql({query: Queries.GET_FAMILY_DATA_FOR_OPEN_PEDIGREE, variables});
-
-      if (result?.data?.family) {
-        return result.data.family;
-      }
-      throw "Error retrieving or creating family object.";
+  const getFamily = async function (phenopacketId) {
+    const variables = {
+      phenopacket_id: phenopacketId
     };
+    const result = await graphql({query: Queries.GET_FAMILY_DATA_FOR_OPEN_PEDIGREE, variables});
+
+    if (result?.data?.family) {
+      return result.data.family;
+    }
+    throw "Error retrieving or creating family object.";
+  };
+
+  const getFamilyCohortData = async function (phenopacketId) {
     const createCohort = async function (individualId, clinicalFamilyRecordIdentifier) {
       const variables = {
         individual_id: individualId,
@@ -224,18 +225,18 @@ document.observe('dom:loaded', async function () {
           });
 
           return onSuccess(
-            JSON.stringify(
-              result?.data?.pedigree[0]?.rawData?.jsonData ?? null
-            )
+            result?.data?.pedigree[0]?.rawData?.jsonData ?? null
           );
         } else {
           console.warn('No phenopacket ID has been specified. No data will be saved.')
         }
       },
       save: async ({ jsonData, svgData, setSaveInProgress }) => {
+        const family = await getFamily(urlParams.get('phenopacket_id'));
+
         //setSaveInProgress(true);
         const variables = {
-          phenopacketId: urlParams.get('phenopacket_id'),
+          familyId: family.id,
           rawData: {
             svgData,
             jsonData,
