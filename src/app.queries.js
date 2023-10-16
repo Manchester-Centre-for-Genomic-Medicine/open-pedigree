@@ -142,6 +142,7 @@ export const REMOVE_COHORT_MEMBER_FROM_OPEN_PEDIGREE = `
   }
 `;
 
+// ?? should run pedigree_data
 export const GET_OPEN_PEDIGREE_DATA = `
   query GetOpenPedigreeData($phenopacketId: uuid!) {
     pedigree:open_pedigree_data(where: {phenopacket_id: {_eq: $phenopacketId}}) {
