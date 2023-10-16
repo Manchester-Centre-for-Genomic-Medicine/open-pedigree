@@ -193,14 +193,7 @@ document.observe('dom:loaded', async function () {
             phenopacketId: urlParams.get('phenopacket_id')
           };
           const result = await graphql({
-            query: `
-              query GetOpenPedigreeData($phenopacketId: uuid!) {
-                pedigree:open_pedigree_data(where: {phenopacket_id: {_eq: $phenopacketId}}) {
-                  id
-                  rawData: pedigree_data
-                }
-              }
-            `,
+            query: Queries.GET_OPEN_PEDIGREE_DATA,
             variables
           });
 
