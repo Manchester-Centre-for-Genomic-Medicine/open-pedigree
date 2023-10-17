@@ -29,7 +29,7 @@ var GEN_O_DISORDERS = [];
 var HPO_TERMS = [];
 
 // Expected to be LIVE, TEST, or DEVELOP. Anything else is considered DEVELOP
-const ENVIRONMENT = 'LIVE';
+const ENVIRONMENT = 'DEVELOP';
 
 if (ENVIRONMENT === 'LIVE') {
   var gen_o_domain = "gen-o.eu.auth0.com";
