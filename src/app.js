@@ -197,6 +197,7 @@ document.observe('dom:loaded', async function () {
             variables
           });
 
+          console.log('found', result);
           return onSuccess(
             JSON.stringify(
               result?.data?.pedigree[0]?.rawData?.jsonData ?? null
