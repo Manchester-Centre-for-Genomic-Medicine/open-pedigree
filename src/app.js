@@ -156,7 +156,6 @@ document.observe('dom:loaded', async function () {
   GEN_O_DISORDERS = await getDisorders();
   HPO_TERMS = await getHPOs();
   const COHORT = await getFamilyCohortData(urlParams.get('phenopacket_id'));
-  console.log(COHORT);
 
   const addToFamilyCohort = async function (individualId, cohortId) {
     const variables = {
@@ -207,18 +206,18 @@ document.observe('dom:loaded', async function () {
         }
       },
       save: async ({ jsonData, svgData, setSaveInProgress }) => {
-        const family = await getFamily(urlParams.get('phenopacket_id'));
-
-        //setSaveInProgress(true);
-        const variables = {
-          familyId: family.id,
-          rawData: {
-            svgData,
-            jsonData,
-          },
-        };
-        const result = await graphql({query: Queries.UPDATE_OPEN_PEDIGREE_DATA, variables});
-        //setSaveInProgress(false);
+        if (urlParams.has('phenopacket_id')) {
+          //setSaveInProgress(true);
+          const variables = {
+            phenopacketId: urlParams.get('phenopacket_id'),
+            rawData: {
+              svgData,
+              jsonData,
+            },
+          };
+          const result = await graphql({query: Queries.UPDATE_OPEN_PEDIGREE_DATA, variables});
+          //setSaveInProgress(false);
+        }
       },
     }
   });
