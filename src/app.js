@@ -29,27 +29,27 @@ var GEN_O_DISORDERS = [];
 var HPO_TERMS = [];
 
 // Expected to be LIVE, TEST, or DEVELOP. Anything else is considered DEVELOP
-const GEN_O_VERSION = 'PREPROD';
+const ENVIRONMENT = 'DEVELOP';
 
-if (GEN_O_VERSION === 'LIVE') {
+if (ENVIRONMENT === 'LIVE') {
   var gen_o_domain = "gen-o.eu.auth0.com";
   var gen_o_client_id = "cMDwFfxF4hC1GOs6W35HdDSPmregh6A7";
   var gen_o_audience = "https://gen-o.eu.auth0.com/api/v2/";
   var gen_o_graphql = "https://graphql.northwestglh.com/v1/graphql";
   var gen_o_application_uri = "https://gen-o.northwestglh.com";
-} else if (GEN_O_VERSION === 'PREPROD') {
+} else if (ENVIRONMENT === 'PREPROD') {
   var gen_o_domain = "gen-o-preprod.eu.auth0.com";
   var gen_o_client_id = "N6PMijd1fIH9yMfAPbVVRbEtk44jA25d";
   var gen_o_audience = "https://gen-o-preprod.eu.auth0.com/api/v2/";
   var gen_o_graphql = "https://preprod-graphql.northwestglh.com/v1/graphql";
   var gen_o_application_uri = "https://preprod-gen-o.northwestglh.com";
-} else if (GEN_O_VERSION === 'TEST') {
+} else if (ENVIRONMENT === 'TEST') {
   var gen_o_domain = "gen-o-test.eu.auth0.com";
   var gen_o_client_id = "Kx350GeJFnWb1mYc5H3GjMvG8hrc2OYR";
   var gen_o_audience = "https://gen-o-test.eu.auth0.com/api/v2/";
   var gen_o_graphql = "https://test-graphql.northwestglh.com/v1/graphql";
   var gen_o_application_uri = "https://test-gen-o.northwestglh.com";
-} else if (GEN_O_VERSION === 'DEVELOP') {
+} else if (ENVIRONMENT === 'DEVELOP') {
   var gen_o_domain = "gen-o-dev.eu.auth0.com";
   var gen_o_client_id = "d3YJUQgU53bhu4O7nhPtFnXM4LjNUb6U";
   var gen_o_audience = "https://gen-o-dev.eu.auth0.com/api/v2/";
@@ -96,7 +96,7 @@ document.observe('dom:loaded', async function () {
   };
 
   // refresh access token every 5 mins
-  const refreshAccess = window.setInterval(refreshAccessToken, 5 * 1000 * 60 * 5);
+  const refreshAccess = window.setInterval(refreshAccessToken, 1000 * 60 * 5);
 
   const graphql = async (body) => {
     const token = await auth0.getTokenSilently();
@@ -180,7 +180,6 @@ document.observe('dom:loaded', async function () {
   GEN_O_DISORDERS = await getDisorders();
   HPO_TERMS = await getHPOs();
   const COHORT = await getFamilyCohortData(urlParams.get('phenopacket_id'));
-  console.log(COHORT);
 
   const addToFamilyCohort = async function (individualId, cohortId) {
     const variables = {
@@ -212,9 +211,6 @@ document.observe('dom:loaded', async function () {
         } else {
           console.warn('No specialty ID has been specified. Individuals created in open-pedigree will not be viewable in Gen-O.');
         }
-        if (DEV_MODE) {
-          specialtyID = '967e0a13-81aa-48f2-8bea-ce0111ddfc94';
-        }
         if (urlParams.has('phenopacket_id')) {
           const variables = {
             phenopacketId: urlParams.get('phenopacket_id')
@@ -225,25 +221,27 @@ document.observe('dom:loaded', async function () {
           });
 
           return onSuccess(
-            result?.data?.pedigree[0]?.rawData?.jsonData ?? null
+            JSON.stringify(
+              result?.data?.pedigree[0]?.rawData?.jsonData ?? null
+            )
           );
         } else {
           console.warn('No phenopacket ID has been specified. No data will be saved.')
         }
       },
       save: async ({ jsonData, svgData, setSaveInProgress }) => {
-        const family = await getFamily(urlParams.get('phenopacket_id'));
-
-        //setSaveInProgress(true);
-        const variables = {
-          familyId: family.id,
-          rawData: {
-            svgData,
-            jsonData,
-          },
-        };
-        const result = await graphql({query: Queries.UPDATE_OPEN_PEDIGREE_DATA, variables});
-        //setSaveInProgress(false);
+        if (urlParams.has('phenopacket_id')) {
+          //setSaveInProgress(true);
+          const variables = {
+            phenopacketId: urlParams.get('phenopacket_id'),
+            rawData: {
+              svgData,
+              jsonData,
+            },
+          };
+          const result = await graphql({query: Queries.UPDATE_OPEN_PEDIGREE_DATA, variables});
+          //setSaveInProgress(false);
+        }
       },
     }
   });
