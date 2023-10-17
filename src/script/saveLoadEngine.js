@@ -262,6 +262,7 @@ var SaveLoadEngine = Class.create( {
   },
 
   _displayData: function(jsonData) {
+    console.log(jsonData, 'imported data');
     // update the json to the current version, then load it in the current interface 
     this.createGraphFromSerializedData(
       editor.getVersionUpdater().updateToCurrentVersion(jsonData)
