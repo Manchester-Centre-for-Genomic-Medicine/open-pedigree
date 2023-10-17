@@ -29,12 +29,15 @@ var GEN_O_DISORDERS = [];
 var HPO_TERMS = [];
 
 // Expected to be LIVE, TEST, or DEVELOP. Anything else is considered DEVELOP
+const ENVIRONMENT = 'LIVE';
 
-var gen_o_domain = "gen-o.eu.auth0.com";
-var gen_o_client_id = "cMDwFfxF4hC1GOs6W35HdDSPmregh6A7";
-var gen_o_audience = "https://gen-o.eu.auth0.com/api/v2/";
-var gen_o_graphql = "https://graphql.northwestglh.com/v1/graphql";
-var gen_o_application_uri = "https://gen-o.northwestglh.com";
+if (ENVIRONMENT === 'LIVE') {
+  var gen_o_domain = "gen-o.eu.auth0.com";
+  var gen_o_client_id = "cMDwFfxF4hC1GOs6W35HdDSPmregh6A7";
+  var gen_o_audience = "https://gen-o.eu.auth0.com/api/v2/";
+  var gen_o_graphql = "https://graphql.northwestglh.com/v1/graphql";
+  var gen_o_application_uri = "https://gen-o.northwestglh.com";
+}
 
 document.observe('dom:loaded', async function () {
   let auth0 = null;
@@ -69,7 +72,7 @@ document.observe('dom:loaded', async function () {
   };
 
   // refresh access token every 5 mins
-  const refreshAccess = window.setInterval(refreshAccessToken, 5 * 1000 * 60 * 5);
+  const refreshAccess = window.setInterval(refreshAccessToken, 1000 * 60 * 5);
 
   const graphql = async (body) => {
     const token = await auth0.getTokenSilently();
@@ -185,9 +188,6 @@ document.observe('dom:loaded', async function () {
         } else {
           console.warn('No specialty ID has been specified. Individuals created in open-pedigree will not be viewable in Gen-O.');
         }
-        if (DEV_MODE) {
-          specialtyID = '967e0a13-81aa-48f2-8bea-ce0111ddfc94';
-        }
         if (urlParams.has('phenopacket_id')) {
           const variables = {
             phenopacketId: urlParams.get('phenopacket_id')
@@ -197,7 +197,6 @@ document.observe('dom:loaded', async function () {
             variables
           });
 
-          console.log('found', result);
           return onSuccess(
             JSON.stringify(
               result?.data?.pedigree[0]?.rawData?.jsonData ?? null
