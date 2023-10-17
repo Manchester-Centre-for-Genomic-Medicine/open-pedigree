@@ -142,27 +142,32 @@ export const REMOVE_COHORT_MEMBER_FROM_OPEN_PEDIGREE = `
   }
 `;
 
+// ?? should run pedigree_data
 export const GET_OPEN_PEDIGREE_DATA = `
   query GetOpenPedigreeData($phenopacketId: uuid!) {
-    pedigree:family(where: {phenopacket_id: {_eq: $phenopacketId}}) {
+    pedigree:open_pedigree_data(where: {phenopacket_id: {_eq: $phenopacketId}}) {
       id
-      rawData: pedigree
+      rawData: pedigree_data
     }
   }
 `;
 
 export const UPDATE_OPEN_PEDIGREE_DATA = `
   mutation UpdateOpenPedigreeData(
-    $familyId: uuid!,
+    $phenopacketId: uuid!,
     $rawData: jsonb!
   ) {
-    insert_family_pedigree(
-      objects: {
-        family_id: $familyId,
-        data: $rawData
+    insert_family_one(
+      object: {
+        phenopacket_id: $phenopacketId,
+        raw_open_pedigree_data: $rawData
+      },
+      on_conflict: {
+        constraint: family_phenopacket_id_key,
+        update_columns: raw_open_pedigree_data
       }
     ) {
-      affected_rows
+      id
     }
   }
 `;
