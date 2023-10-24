@@ -28,8 +28,8 @@ var HGNC_GENES = [];
 var GEN_O_DISORDERS = [];
 var HPO_TERMS = [];
 
-// Expected to be LIVE, TEST, or DEVELOP. Anything else is considered DEVELOP
-const ENVIRONMENT = 'DEVELOP';
+// Expected to be LIVE, PREPROD, TEST, DEVELOP, or LOCAL. Anything else is considered LOCAL
+const ENVIRONMENT = 'LOCAL';
 
 if (ENVIRONMENT === 'LIVE') {
   var gen_o_domain = "gen-o.eu.auth0.com";
@@ -231,16 +231,19 @@ document.observe('dom:loaded', async function () {
       },
       save: async ({ jsonData, svgData, setSaveInProgress }) => {
         if (urlParams.has('phenopacket_id')) {
-          //setSaveInProgress(true);
-          const variables = {
-            phenopacketId: urlParams.get('phenopacket_id'),
-            rawData: {
-              svgData,
-              jsonData,
-            },
-          };
-          const result = await graphql({query: Queries.UPDATE_OPEN_PEDIGREE_DATA, variables});
-          //setSaveInProgress(false);
+          const family = await getFamily(urlParams.get('phenopacket_id'));
+          if (!!family) {
+            //setSaveInProgress(true);
+            const variables = {
+              familyId: family.id,
+              rawData: {
+                svgData,
+                jsonData,
+              },
+            };
+            const result = await graphql({query: Queries.UPDATE_OPEN_PEDIGREE_DATA, variables});
+            //setSaveInProgress(false);
+          }
         }
       },
     }

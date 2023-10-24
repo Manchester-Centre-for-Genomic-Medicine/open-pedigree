@@ -154,17 +154,13 @@ export const GET_OPEN_PEDIGREE_DATA = `
 
 export const UPDATE_OPEN_PEDIGREE_DATA = `
   mutation UpdateOpenPedigreeData(
-    $phenopacketId: uuid!,
+    $familyId: uuid!,
     $rawData: jsonb!
   ) {
-    insert_family_one(
+    insert_family_pedigree_one(
       object: {
-        phenopacket_id: $phenopacketId,
-        raw_open_pedigree_data: $rawData
-      },
-      on_conflict: {
-        constraint: family_phenopacket_id_key,
-        update_columns: raw_open_pedigree_data
+        family_id: $familyId,
+        data: $rawData
       }
     ) {
       id
