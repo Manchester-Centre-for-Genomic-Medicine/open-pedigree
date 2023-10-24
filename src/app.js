@@ -221,9 +221,7 @@ document.observe('dom:loaded', async function () {
           });
 
           return onSuccess(
-            JSON.stringify(
-              result?.data?.pedigree[0]?.rawData?.jsonData ?? null
-            )
+            result?.data?.pedigree[0]?.rawData?.jsonData ?? null
           );
         } else {
           console.warn('No phenopacket ID has been specified. No data will be saved.')
@@ -231,16 +229,19 @@ document.observe('dom:loaded', async function () {
       },
       save: async ({ jsonData, svgData, setSaveInProgress }) => {
         if (urlParams.has('phenopacket_id')) {
-          //setSaveInProgress(true);
-          const variables = {
-            phenopacketId: urlParams.get('phenopacket_id'),
-            rawData: {
-              svgData,
-              jsonData,
-            },
-          };
-          const result = await graphql({query: Queries.UPDATE_OPEN_PEDIGREE_DATA, variables});
-          //setSaveInProgress(false);
+          const family = await getFamily(urlParams.get('phenopacket_id'));
+          if (!!family) {
+            //setSaveInProgress(true);
+            const variables = {
+              familyId: family.id,
+              rawData: {
+                svgData,
+                jsonData,
+              },
+            };
+            const result = await graphql({query: Queries.UPDATE_OPEN_PEDIGREE_DATA, variables});
+            //setSaveInProgress(false);
+          }
         }
       },
     }
