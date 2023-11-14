@@ -260,7 +260,10 @@ document.observe('dom:loaded', async function () {
     const variables = {
       nhsNumber: nhsID,
     };
-    const result = await graphql({ query: Queries.GET_PATIENT_DEMOGRAPHICS_FROM_SPINE, variables });
+    const result = await graphql({
+      query: Queries.GET_PATIENT_DEMOGRAPHICS_FROM_SPINE,
+      variables,
+    });
     return result;
   }
 
@@ -284,6 +287,22 @@ document.observe('dom:loaded', async function () {
       editor.getNodeMenu().update();
     }
   }
+
+  const isUsualName = (name) => {
+    return name?.use === 'usual';
+  }
+
+  const sortPatientName = (nameA, nameB) => {
+    if (isUsualName(nameA) && !isUsualName(nameB)) {
+      return -1;
+    }
+    if (!isUsualName(nameA) && isUsualName(nameB)) {
+      return 1;
+    }
+
+    return (nameA?.period?.start && nameB?.period?.start) ?
+      new Date(nameB.period.start) - new Date(nameA.period.start) : 0
+  };
 
   const updateNodeOnExternalIDChange = async function (node) {
     const oldPhenopacketID = node.getPhenopacketID();
@@ -354,9 +373,10 @@ document.observe('dom:loaded', async function () {
         var result = await getDemographicsPDS(nhsID);
         if (result.data?.individual) {
           clearNodeDemographics(node, false);
-          var names = result.data.individual.name
-          node.setFirstName(names[names.length - 1]?.given[0]);
-          node.setLastName(names[names.length - 1]?.family);
+          var names = result.data.individual.name;
+          names.sort(sortPatientName)
+          node.setFirstName(names[0]?.given[0]);
+          node.setLastName(names[0]?.family);
           node.setLifeStatus(
             result.data.individual?.deceased
               ? 'deceased'
