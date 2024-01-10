@@ -9,7 +9,7 @@ export const GET_GENE = `
 
 export const GET_DISORDER_API = `
   query GetDisorderApi {
-    disorder_api {
+    disorder_api:disorder {
       ontology_id
       name
     }
