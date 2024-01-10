@@ -203,7 +203,7 @@ var PedigreeEditor = Class.create({
      */
   updateSwitchColorButtonLabel: function() {
     var switchColorButton = $('action-switch-coloring');
-    switchColorButton.children[1].innerText = `Switch coloring (Now ${this.coloringSource})`;
+    switchColorButton.children[1].innerText = `Shaded by ${this.coloringSource} (click to change)`;
   },
 
   /**
