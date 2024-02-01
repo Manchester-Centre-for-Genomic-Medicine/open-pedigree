@@ -94,7 +94,7 @@ document.observe('dom:loaded', async function () {
   }
 
   const refreshAccessToken = function () {
-    console.log('get token');
+    console.log('get token', auth0);
     auth0.getTokenSilently();
   };
 
