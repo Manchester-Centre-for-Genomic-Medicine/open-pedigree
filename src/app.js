@@ -94,12 +94,12 @@ document.observe('dom:loaded', async function () {
   }
 
   const refreshAccessToken = function () {
-    console.log('get token', auth0);
+    //console.log('get token', auth0);
     auth0.getTokenSilently();
   };
 
-  // refresh access token every 5 mins
-  const refreshAccess = window.setInterval(refreshAccessToken, 1000 * 60/* * 5*/);
+  // refresh access token every minute
+  const refreshAccess = window.setInterval(refreshAccessToken, 1000 * 60);
 
   const graphql = async (body) => {
     const token = await auth0.getTokenSilently();
