@@ -28,6 +28,9 @@ var HGNC_GENES = [];
 var GEN_O_DISORDERS = [];
 var HPO_TERMS = [];
 
+// make sure auth0 is available throughout the application
+var auth0 = null;
+
 // Expected to be LIVE, TEST, or DEVELOP. Anything else is considered DEVELOP
 const ENVIRONMENT = 'LIVE';
 
@@ -64,7 +67,6 @@ if (ENVIRONMENT === 'LIVE') {
 }
 
 document.observe('dom:loaded', async function () {
-  let auth0 = null;
   const configureAuth0 = async () => {
     auth0 = await new Auth0Client({
       domain: gen_o_domain,
@@ -91,12 +93,13 @@ document.observe('dom:loaded', async function () {
     }
   }
 
-  const refreshAccessToken = async function () {
-    await auth0.getTokenSilently();
+  const refreshAccessToken = function () {
+    //console.log('get token', auth0);
+    auth0.getTokenSilently();
   };
 
-  // refresh access token every 5 mins
-  const refreshAccess = window.setInterval(refreshAccessToken, 1000 * 60 * 5);
+  // refresh access token every minute
+  const refreshAccess = window.setInterval(refreshAccessToken, 1000 * 60);
 
   const graphql = async (body) => {
     const token = await auth0.getTokenSilently();
