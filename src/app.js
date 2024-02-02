@@ -1,4 +1,7 @@
-import  { createAuth0Client } from "@auth0/auth0-spa-js";
+import  {
+  Auth0Client,
+  createAuth0Client
+} from "@auth0/auth0-spa-js";
 
 import PedigreeEditor from './script/pedigree';
 import "babel-polyfill";
