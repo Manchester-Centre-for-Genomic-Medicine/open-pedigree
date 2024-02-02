@@ -1,4 +1,6 @@
-import  { Auth0Client } from "@auth0/auth0-spa-js";
+import  {
+  Auth0Client,
+} from "@auth0/auth0-spa-js";
 
 import PedigreeEditor from './script/pedigree';
 import "babel-polyfill";
@@ -94,12 +96,12 @@ document.observe('dom:loaded', async function () {
   }
 
   const refreshAccessToken = function () {
-    //console.log('get token', auth0);
+    console.log('get token', auth0);
     auth0.getTokenSilently();
   };
 
   // refresh access token every minute
-  const refreshAccess = window.setInterval(refreshAccessToken, 1000 * 60);
+  setInterval(refreshAccessToken, 1000 * 60);
 
   const graphql = async (body) => {
     const token = await auth0.getTokenSilently();
