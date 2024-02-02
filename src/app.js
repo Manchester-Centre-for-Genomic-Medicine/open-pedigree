@@ -102,7 +102,7 @@ document.observe('dom:loaded', async function () {
   };
 
   // refresh access token every minute
-  const refreshAccess = window.setInterval(refreshAccessToken, 1000 * 60);
+  setInterval(refreshAccessToken, 1000 * 60);
 
   const graphql = async (body) => {
     const token = await auth0.getTokenSilently();
