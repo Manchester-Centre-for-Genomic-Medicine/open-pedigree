@@ -28,6 +28,9 @@ var HGNC_GENES = [];
 var GEN_O_DISORDERS = [];
 var HPO_TERMS = [];
 
+// make sure auth0 is available throughout the application
+var auth0 = null;
+
 // Expected to be LIVE, TEST, or DEVELOP. Anything else is considered DEVELOP
 const ENVIRONMENT = 'TEST';
 
@@ -64,11 +67,15 @@ if (ENVIRONMENT === 'LIVE') {
 }
 
 document.observe('dom:loaded', async function () {
-  const auth0 = await createAuth0Client({
-    domain: gen_o_domain,
-    client_id: gen_o_client_id,
-    audience: gen_o_audience,
-  });
+  const configureAuth0 = async () => {
+    auth0 = await Auth0Client({
+      domain: gen_o_domain,
+      client_id: gen_o_client_id,
+      audience: gen_o_audience,
+    });
+  };
+
+  await configureAuth0();
 
   const authenticated = await auth0.isAuthenticated();
   const login = async () => {
@@ -87,7 +94,7 @@ document.observe('dom:loaded', async function () {
   }
 
   const refreshAccessToken = function () {
-    //console.log('get token', auth0);
+    console.log('get token', auth0);
     auth0.getTokenSilently();
   };
 
@@ -613,25 +620,37 @@ document.observe('dom:loaded', async function () {
 document.observe('pedigree:person:set:disorders', function(event) {
   // Note for future, for some reason it is executed twice on update...
   // Function to print Person external ID and disorder terms when the latter are updated.
+  console.log('Person disorders were updated!')
+  console.log('Person external ID:', event.memo.node.getExternalID())
+  console.log('Disorders:')
   var disorders = event.memo.value
   for(var i = 0; i < disorders.length; i++) {
     var disorder = disorders[i]
+    console.log(`${i}) ID: ${disorder.getDesanitizedDisorderID()}, Name: ${disorder.getName()}`);
   }
 });
 
 document.observe('pedigree:person:set:hpo', function(event) {
   // Function to print Person external ID and HPO terms when the latter are updated.
+  console.log('Person HPO Terms were updated!');
+  console.log('Person external ID:', event.memo.node.getExternalID());
+  console.log('HPO Terms:');
   var hpos = event.memo.value;
   for(var i = 0; i < hpos.length; i++) {
     var hpo = hpos[i];
+    console.log(`${i}) ID: ${HPOTerm.desanitizeID(hpo.getID())}, Name: ${hpo.getName()}`);
   }
 });
 
 document.observe('pedigree:person:set:genes', function(event) {
   // Function to print Person external ID and genes when the latter are updated.
+  console.log('Person genes were updated!');
+  console.log('Person external ID:', event.memo.node.getExternalID());
+  console.log('Genes:');
   var genes = event.memo.value;
   for(var i = 0; i < genes.length; i++) {
     var gene = genes[i];
+    console.log(`${i}) ID: ${gene.getID()}, Name: ${gene.getSymbol()}`);
   }
 });
 
