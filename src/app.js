@@ -1,6 +1,5 @@
 import  {
   Auth0Client,
-  createAuth0Client
 } from "@auth0/auth0-spa-js";
 
 import PedigreeEditor from './script/pedigree';
@@ -71,7 +70,7 @@ if (ENVIRONMENT === 'LIVE') {
 
 document.observe('dom:loaded', async function () {
   const configureAuth0 = async () => {
-    auth0 = await Auth0Client({
+    auth0 = await new Auth0Client({
       domain: gen_o_domain,
       client_id: gen_o_client_id,
       audience: gen_o_audience,
