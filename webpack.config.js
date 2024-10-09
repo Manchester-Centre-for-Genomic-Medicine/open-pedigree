@@ -1,13 +1,22 @@
 const webpack = require('webpack');
 const path = require('path');
-const TerserPlugin = require('terser-webpack-plugin');
+const { GoogleClosureLibraryWebpackPlugin } = require('google-closure-library-webpack-plugin');
 const Dotenv = require('dotenv-webpack');
 
 module.exports = {
   entry: './src/app.js',
 
   plugins: [
-    new Dotenv()
+    new Dotenv(),
+    new GoogleClosureLibraryWebpackPlugin({
+      base: './node_modules/google-closure-library/closure/goog/base.js',
+      sources: [
+        path.resolve(__dirname, 'src/**/*.js')
+      ],
+      debug: {
+        logTransformed: true
+      }
+    }),
   ],
 
   output: {
@@ -65,19 +74,6 @@ module.exports = {
   devServer: {
     contentBase: path.join(__dirname, '.'),
     port: 9000
-  },
-
-  optimization: {
-    minimize: true,
-    minimizer: [
-      new TerserPlugin({
-        terserOptions: {
-          mangle: {
-            reserved: ['$super'],
-          },
-        },
-      }),
-    ],
   },
 
   resolve: {
