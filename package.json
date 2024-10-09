@@ -4,7 +4,7 @@
   "description": "A free and open-source genetics pedigree tool powered by PhenoTips®",
   "main": "src/app.js",
   "scripts": {
-    "build": "webpack",
+    "build": "webpack --mode=production",
     "test": "node_modules/.bin/eslint --quiet src/**/*.js",
     "start": "webpack-dev-server --mode=development --output-public-path=dist --watch",
     "start-docker": "webpack-dev-server --mode=development --disable-host-check --output-public-path=dist --host=0.0.0.0"
@@ -45,6 +45,7 @@
     "dotenv-webpack": "^7.0.3",
     "eslint": "^5.0.0",
     "file-loader": "^6.2.0",
+    "google-closure-library-webpack-plugin": "^2.2.5",
     "html-webpack-plugin": "^5.6.0",
     "node-sass": "^7.0.1",
     "raphael": "^2.3.0",
