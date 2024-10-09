@@ -62,10 +62,6 @@ module.exports = {
     ]
   },
 
-  node: {
-    fs: 'empty'
-  },
-
   devServer: {
     contentBase: path.join(__dirname, '.'),
     port: 9000
