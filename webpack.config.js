@@ -1,23 +1,9 @@
 const webpack = require('webpack');
 const path = require('path');
-const { GoogleClosureLibraryWebpackPlugin } = require('google-closure-library-webpack-plugin');
-const Dotenv = require('dotenv-webpack');
+const TerserPlugin = require('terser-webpack-plugin');
 
 module.exports = {
   entry: './src/app.js',
-
-  plugins: [
-    new Dotenv(),
-    new GoogleClosureLibraryWebpackPlugin({
-      base: './node_modules/google-closure-library/closure/goog/base.js',
-      sources: [
-        path.resolve(__dirname, 'src/**/*.js')
-      ],
-      debug: {
-        logTransformed: true
-      }
-    }),
-  ],
 
   output: {
     filename: 'pedigree.min.js',
@@ -72,8 +58,22 @@ module.exports = {
   },
 
   devServer: {
-    contentBase: path.join(__dirname, '.'),
+    static: './',
     port: 9000
+  },
+
+  optimization: {
+    minimize: true,
+    minimizer: [
+      new TerserPlugin({
+        terserOptions: {
+          ecma: 8,
+          mangle: {
+            reserved: ['$super'],
+          },
+        },
+      }),
+    ],
   },
 
   resolve: {
