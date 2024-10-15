@@ -32,8 +32,7 @@ var HPO_TERMS = [];
 var auth0 = null;
 
 // Expected to be LIVE, TEST, or DEVELOP. Anything else is considered DEVELOP
-
-const ENVIRONMENT = 'PREPROD';
+const ENVIRONMENT = 'LIVE';
 
 if (ENVIRONMENT === 'LIVE') {
   var keycloak_url = 'https://mft-uks-keycloak.uksouth.cloudapp.azure.com/';
