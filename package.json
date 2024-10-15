@@ -4,7 +4,7 @@
   "description": "A free and open-source genetics pedigree tool powered by PhenoTips®",
   "main": "src/app.js",
   "scripts": {
-    "build": "webpack -p",
+    "build": "webpack --mode=production",
     "test": "node_modules/.bin/eslint --quiet src/**/*.js",
     "start": "webpack-dev-server --mode=development --output-public-path=dist --watch",
     "start-docker": "webpack-dev-server --mode=development --disable-host-check --output-public-path=dist --host=0.0.0.0"
@@ -30,9 +30,10 @@
   "homepage": "https://github.com/phenotips/open-pedigree#readme",
   "dependencies": {
     "@auth0/auth0-spa-js": "^1.19.2",
-    "babel-polyfill": "^6.26.0",
     "@selectize/selectize": "^0.13.6",
-    "jquery": "^3.6.0"
+    "babel-polyfill": "^6.26.0",
+    "jquery": "^3.6.0",
+    "keycloak-js": "^26.0.0"
   },
   "devDependencies": {
     "@babel/core": "^7.15.0",
@@ -43,15 +44,16 @@
     "css-loader": "^3.6.0",
     "dotenv-webpack": "^7.0.3",
     "eslint": "^5.0.0",
-    "file-loader": "^1.1.11",
-    "html-webpack-plugin": "^3.2.0",
+    "file-loader": "^6.2.0",
+    "google-closure-library-webpack-plugin": "^2.2.5",
+    "html-webpack-plugin": "^5.6.0",
     "node-sass": "^7.0.1",
     "raphael": "^2.3.0",
-    "sass-loader": "^7.0.1",
+    "sass-loader": "^16.0.2",
     "style-loader": "^0.21.0",
-    "terser-webpack-plugin": "^2.3.8",
-    "webpack": "^4.46.0",
-    "webpack-cli": "^3.3.12",
-    "webpack-dev-server": "^3.11.2"
+    "terser-webpack-plugin": "^5.3.10",
+    "webpack": "^5.95.0",
+    "webpack-cli": "^5.1.4",
+    "webpack-dev-server": "^4.15.2"
   }
 }

@@ -1,5 +1,5 @@
 # Stage 1: base image
-FROM node:14 as build-stage
+FROM node:20 as build-stage
 
 # create the app directory
 RUN mkdir -p /usr/src/app
