@@ -31,7 +31,7 @@ var HPO_TERMS = [];
 // make sure auth0 is available throughout the application
 var auth0 = null;
 
-// Expected to be LIVE, TEST, or DEVELOP. Anything else is considered DEVELOP
+// Expected to be LIVE, PREPROD, TEST, DEVELOP, or LOCAL. Anything else is considered LOCAL
 const ENVIRONMENT = 'LIVE';
 
 if (ENVIRONMENT === 'LIVE') {
