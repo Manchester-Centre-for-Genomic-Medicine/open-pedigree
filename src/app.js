@@ -31,13 +31,8 @@ var HPO_TERMS = [];
 // make sure auth0 is available throughout the application
 var auth0 = null;
 
-<<<<<<< HEAD
 // Expected to be LIVE, PREPROD, TEST, DEVELOP, or LOCAL. Anything else is considered LOCAL
 const ENVIRONMENT = 'LIVE';
-=======
-// Expected to be LIVE, TEST, or DEVELOP. Anything else is considered DEVELOP
-const ENVIRONMENT = 'LOCAL';
->>>>>>> 0140d55 (gh-963: refresh yarn.lock)
 
 if (ENVIRONMENT === 'LIVE') {
   var keycloak_url = 'https://mft-uks-keycloak.uksouth.cloudapp.azure.com/';
