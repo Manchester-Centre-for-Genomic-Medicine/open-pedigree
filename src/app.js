@@ -31,8 +31,13 @@ var HPO_TERMS = [];
 // make sure auth0 is available throughout the application
 var auth0 = null;
 
-// Expected to be LIVE, TEST, or DEVELOP. Anything else is considered DEVELOP
+<<<<<<< HEAD
+// Expected to be LIVE, PREPROD, TEST, DEVELOP, or LOCAL. Anything else is considered LOCAL
 const ENVIRONMENT = 'LIVE';
+=======
+// Expected to be LIVE, TEST, or DEVELOP. Anything else is considered DEVELOP
+const ENVIRONMENT = 'LOCAL';
+>>>>>>> 0140d55 (gh-963: refresh yarn.lock)
 
 if (ENVIRONMENT === 'LIVE') {
   var keycloak_url = 'https://mft-uks-keycloak.uksouth.cloudapp.azure.com/';
@@ -70,16 +75,16 @@ document.observe('dom:loaded', async function () {
   const keycloak = new Keycloak({
     url: keycloak_url,
     realm: keycloak_realm,
-    clientId: keycloak_client_id,
+    clientId: keycloak_client_id
   });
 
   try {
     const authenticated = await keycloak.init({
-      checkLoginIframe: false,
+      checkLoginIframe: false
     });
     if (!authenticated) {
       keycloak.login({
-        redirect_uri: window.location.href,
+        redirect_uri: window.location.href
       });
     } else {
       setInterval(keycloak.updateToken, 1000 * 30);
