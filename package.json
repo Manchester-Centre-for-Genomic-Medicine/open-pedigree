@@ -29,7 +29,6 @@
   },
   "homepage": "https://github.com/phenotips/open-pedigree#readme",
   "dependencies": {
-    "@auth0/auth0-spa-js": "^1.19.2",
     "@selectize/selectize": "^0.13.6",
     "babel-polyfill": "^6.26.0",
     "jquery": "^3.6.0",
