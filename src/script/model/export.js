@@ -28,6 +28,7 @@ PedigreeExport.prototype = {
  *       2 affected
  */
 PedigreeExport.exportAsPED = function(pedigree, idGenerationPreference) {
+  const DELIMITER = '';
   var output = '';
 
   var familyID = 'OPENPED';
@@ -373,6 +374,7 @@ PedigreeExport.convertProperty = function(internalPropertyName, value) {
 PedigreeExport.createNewIDs = function(pedigree, idGenerationPreference, maxLength) {
   var idToNewId = {};
   var usedIDs   = {};
+  const DELIMITER = '';
 
   var nextUnusedID = 1;
 
@@ -384,17 +386,17 @@ PedigreeExport.createNewIDs = function(pedigree, idGenerationPreference, maxLeng
     var id = nextUnusedID++;
     if (idGenerationPreference == 'external' && pedigree.GG.properties[i].hasOwnProperty('externalID')) {
       nextUnusedID--;
-      id = pedigree.GG.properties[i]['externalID'].replace(/\s/g, '_');
+      id = pedigree.GG.properties[i]['externalID'].replace(/\s/g, DELIMITER);
     } else if (idGenerationPreference == 'name' && pedigree.GG.properties[i].hasOwnProperty('fName')) {
       nextUnusedID--;
-      id = pedigree.GG.properties[i]['fName'].replace(/\s/g, '_');
+      id = pedigree.GG.properties[i]['fName'].replace(/\s/g, DELIMITER);
     }
     if (maxLength && id.length > maxLength) {
       id = id.substring(0, maxLength);
     }
     while ( usedIDs.hasOwnProperty(id) ) {
       if (!maxLength || id.length < maxLength) {
-        id = '_' + id;
+        id = DELIMITER + id;
       } else {
         id = nextUnusedID++;
       }
