@@ -47,8 +47,10 @@ PedigreeExport.exportAsPED = function(pedigree, idGenerationPreference) {
       var father = parents[0];
       var mother = parents[1];
 
-      if ( pedigree.GG.properties[parents[0]]['gender'] == 'F' ||
-                pedigree.GG.properties[parents[1]]['gender'] == 'M' ) {
+      if (
+        pedigree.GG.properties[parents[0]]['gender'] == 'F' ||
+        pedigree.GG.properties[parents[1]]['gender'] == 'M'
+      ) {
         father = parents[1];
         mother = parents[0];
       }
@@ -67,9 +69,11 @@ PedigreeExport.exportAsPED = function(pedigree, idGenerationPreference) {
 
     var status = -9; //missing
     if (pedigree.GG.properties[i].hasOwnProperty('carrierStatus')) {
-      if (pedigree.GG.properties[i]['carrierStatus'] == 'affected' ||
-               pedigree.GG.properties[i]['carrierStatus'] == 'carrier'  ||
-               pedigree.GG.properties[i]['carrierStatus'] == 'presymptomatic') {
+      if (
+          pedigree.GG.properties[i]['carrierStatus'] == 'affected' ||
+          pedigree.GG.properties[i]['carrierStatus'] == 'carrier'  ||
+          pedigree.GG.properties[i]['carrierStatus'] == 'presymptomatic'
+      ) {
         status = 2;
       } else {
         status = 1;
@@ -371,6 +375,7 @@ PedigreeExport.convertProperty = function(internalPropertyName, value) {
 };
 
 PedigreeExport.createNewIDs = function(pedigree, idGenerationPreference, maxLength) {
+  const DELIMINATOR = '_';
   var idToNewId = {};
   var usedIDs   = {};
 
@@ -384,17 +389,17 @@ PedigreeExport.createNewIDs = function(pedigree, idGenerationPreference, maxLeng
     var id = nextUnusedID++;
     if (idGenerationPreference == 'external' && pedigree.GG.properties[i].hasOwnProperty('externalID')) {
       nextUnusedID--;
-      id = pedigree.GG.properties[i]['externalID'].replace(/\s/g, '_');
+      id = pedigree.GG.properties[i]['externalID'].replace(/\s/g, DELIMINATOR);
     } else if (idGenerationPreference == 'name' && pedigree.GG.properties[i].hasOwnProperty('fName')) {
       nextUnusedID--;
-      id = pedigree.GG.properties[i]['fName'].replace(/\s/g, '_');
+      id = pedigree.GG.properties[i]['fName'].replace(/\s/g, DELIMINATOR);
     }
     if (maxLength && id.length > maxLength) {
       id = id.substring(0, maxLength);
     }
     while ( usedIDs.hasOwnProperty(id) ) {
       if (!maxLength || id.length < maxLength) {
-        id = '_' + id;
+        id = DELIMINATOR + id;
       } else {
         id = nextUnusedID++;
       }
