@@ -44,7 +44,7 @@ PedigreeEditorParameters.attributes = {
   descendantGroupLabel: {'font-size': 21, 'font-family': 'Tahoma'},
   label: {'font-size': 20, 'font-family': 'Arial'},
   nameLabels: {'font-size': 20, 'font-family': 'Arial'},
-  commentLabel: {'font-size': 19, 'font-family': 'Arial' },
+  commentLabel: {'font-size': 16, 'font-family': 'Arial'}, // Original font size was 19
   externalIDLabels: {'font-size': 18, 'font-family': 'Arial' },
   disorderShapes: {},
   partnershipNode: {fill: '#dc7868', stroke: 'black', 'stroke-width':2},

@@ -87,7 +87,7 @@ var DisorgerLegend = Class.create( Legend, {
      * @return {HTMLLIElement} List element to be insert in the legend
      */
   _generateElement: function($super, disorderID, name) {
-    if (!this._objectColors.hasOwnProperty(disorderID)) {
+    if (!this._objectColors.hasOwnProperty(disorderID) && this._showColors) {
       var color = this._generateColor(disorderID);
       this._objectColors[disorderID] = color;
       document.fire('disorder:color', {'id' : disorderID, color: color});
@@ -127,15 +127,18 @@ var DisorgerLegend = Class.create( Legend, {
       // [red/yellow]           prefColors = ["#FEE090", '#f8ebb7', '#eac080', '#bf6632', '#9a4500', '#a47841', '#c95555', '#ae6c57'];
       // [original yellow/blue] prefColors = ["#FEE090", '#E0F8F8', '#8ebbd6', '#4575B4', '#fca860', '#9a4500', '#81a270'];
       // [green]                prefColors = ['#81a270', '#c4e8c4', '#56a270', '#b3b16f', '#4a775a', '#65caa3'];
-      prefColors = ['#E0F8F8', '#92c0db', '#4575B4', '#949ab8', '#FEE090', '#bf6632', '#fca860', '#9a4500', '#d12943', '#00a2bf'];
+      // prefColors = ['#E0F8F8', '#92c0db', '#4575B4', '#949ab8', '#FEE090', '#bf6632', '#fca860', '#9a4500', '#d12943', '#00a2bf'];
+      // Viridis (12) color palette https://waldyrious.net/viridis-palette-generator/
+      prefColors = ['#fde725', '#c2df23', '#86d549', '#52c569', '#2ab07f', '#1e9b8a', '#25858e', '#2d708e', '#38588c', '#433e85', '#482173', '#440154'];
     usedColors.each( function(color) {
       prefColors = prefColors.without(color);
     });
     if (disorderID == 'affected') {
-      if (usedColors.indexOf('#FEE090') > -1 ) {
+      // Original default color was #FEE090
+      if (usedColors.indexOf('#fde725') > -1 ) {
         return '#dbad71';
       } else {
-        return '#FEE090';
+        return '#fde725';
       }
     }
     if(prefColors.length > 0) {

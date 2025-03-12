@@ -1,6 +1,7 @@
 import Raphael from 'pedigree/raphael';
 import Legend from 'pedigree/view/legend';
 import Person from 'pedigree/view/person';
+import Gene from 'pedigree/gene';
 
 /**
  * Class responsible for keeping track of candidate genes.
@@ -13,12 +14,37 @@ var GeneLegend = Class.create( Legend, {
 
   initialize: function($super) {
     $super('Candidate Genes');
+    // Save gene HGNC IDs. They are displayed in node menu, but not in the legend itself.
+    // Used when legend is refreshed during coloring switch
+    this._hgncIDs = {}
   },
 
   _getPrefix: function(id) {
     return 'gene';
   },
 
+  /**
+   * Save gene HGNC ID
+   *
+   * @method addHGNCID
+   * @param {String} name Gene Symbol
+   * @param {String} hgncID Gene HGNC ID
+   */
+  addHGNCID: function(name, hgncID) {
+    this._hgncIDs[name] = hgncID;
+  },
+
+  /**
+   * Get gene HGNC ID
+   *
+   * @method getHGNCID
+   * @param {String} name Gene Symbol
+   * @return {String} Gene HGNC ID
+   */
+  getHGNCID: function(name) {
+    return this._hgncIDs[name];
+  },
+  
   /**
      * Generate the element that will display information about the given disorder in the legend
      *
@@ -28,7 +54,7 @@ var GeneLegend = Class.create( Legend, {
      * @return {HTMLLIElement} List element to be insert in the legend
      */
   _generateElement: function($super, geneID, name) {
-    if (!this._objectColors.hasOwnProperty(geneID)) {
+    if (!this._objectColors.hasOwnProperty(geneID) && this._showColors) {
       var color = this._generateColor(geneID);
       this._objectColors[geneID] = color;
       document.fire('gene:color', {'id' : geneID, color: color});
@@ -52,7 +78,9 @@ var GeneLegend = Class.create( Legend, {
 
     var usedColors = Object.values(this._objectColors),
       // green palette
-      prefColors = ['#81a270', '#c4e8c4', '#56a270', '#b3b16f', '#4a775a', '#65caa3'];
+      // prefColors = ['#81a270', '#c4e8c4', '#56a270', '#b3b16f', '#4a775a', '#65caa3'];
+      // Inferno (12) color palette https://waldyrious.net/viridis-palette-generator/
+      prefColors = ['#fcffa4', '#f5db4c', '#fcae12', '#f78410', '#e65d2f', '#cb4149', '#a92e5e', '#85216b', '#5f136e', '#390963', '#140b34', '#000004'];
     usedColors.each( function(color) {
       prefColors = prefColors.without(color);
     });

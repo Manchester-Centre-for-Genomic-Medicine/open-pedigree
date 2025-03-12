@@ -63,7 +63,10 @@ var Partnership = Class.create(AbstractNode, {
     if(status != this.getChildlessStatus()) {
       this._childlessStatus = status;
       this.getGraphics().updateChildlessShapes();
-      this.getGraphics().updateChildhubConnection();
+      // By default, _childlessStatus of a couple without children is "childless".
+      // To overwrite this behaviour, "updateChildhubConnection" function has to be 
+      // executed with "updateChildlessStatus" paramter value set to false.
+      this.getGraphics().updateChildhubConnection(false);
       this.getGraphics().getHoverBox().regenerateHandles();
     }
 

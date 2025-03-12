@@ -58,7 +58,7 @@ module.exports = {
   },
 
   devServer: {
-    contentBase: path.join(__dirname, '.'),
+    static: './',
     port: 9000
   },
 
@@ -67,6 +67,7 @@ module.exports = {
     minimizer: [
       new TerserPlugin({
         terserOptions: {
+          ecma: 8,
           mangle: {
             reserved: ['$super'],
           },

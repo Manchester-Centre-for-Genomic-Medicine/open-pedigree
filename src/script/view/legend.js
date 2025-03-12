@@ -10,9 +10,11 @@ import Helpers from 'pedigree/model/helpers';
 var Legend = Class.create( {
 
   initialize: function(title) {
+    this._showColors = false;      // if true legend and nodes are coloured.
     this._affectedNodes  = {};     // for each object: the list of affected person nodes
 
     this._objectColors = {};       // for each object: the corresponding object color
+    this._objectNames = {}; 
 
     var legendContainer = $('legend-container');
     if (legendContainer == undefined) {
@@ -52,6 +54,26 @@ var Legend = Class.create( {
   },
 
   /**
+     * Set legend coloring status.
+     *
+     * @method setShowColors
+     * @param {Boolean} legend coloring status
+     */
+  setShowColors: function(value) {
+    this._showColors = value;
+  },
+
+  /**
+     * Returns legend coloring status.
+     *
+     * @method getShowColors
+     * @return {Boolean} legend coloring status
+     */
+  getShowColors: function() {
+    return this._showColors;
+  },
+
+  /**
      * Retrieve the color associated with the given object
      *
      * @method getObjectColor
@@ -59,8 +81,8 @@ var Legend = Class.create( {
      * @return {String} CSS color value for the object, displayed on affected nodes in the pedigree and in the legend
      */
   getObjectColor: function(id) {
-    if (!this._objectColors.hasOwnProperty(id)) {
-      return '#ff0000';
+    if (!this._objectColors.hasOwnProperty(id) || !this._showColors) {
+      return '#CCCCCC';
     }
     return this._objectColors[id];
   },
@@ -89,6 +111,7 @@ var Legend = Class.create( {
       this._legendBox.show();
     }
     if(!this._hasAffectedNodes(id)) {
+      this._objectNames[id] = name;
       this._affectedNodes[id] = [nodeID];
       var listElement = this._generateElement(id, name);
       this._list.insert(listElement);
@@ -111,6 +134,7 @@ var Legend = Class.create( {
       if(this._affectedNodes[id].length == 0) {
         delete this._affectedNodes[id];
         delete this._objectColors[id];
+        delete this._objectNames[id];
         var htmlElement = this._getListElementForObjectWithID(id);
         htmlElement.remove();
         if(Object.keys(this._affectedNodes).length == 0) {
@@ -120,6 +144,26 @@ var Legend = Class.create( {
         this._updateCaseNumbersForObject(id);
       }
     }
+  },
+
+  /**
+     * Return a dictionary where keys are Node IDs, and values are arreys of legend object [id, name] tuples.
+     *
+     * @method getAllNodeObjects
+     * @return {Object} dictionary of all node objects
+     */
+  getAllNodeObjects: function() {
+    var nodes = {};
+    for (const [id, name] of Object.entries(this._objectNames)) {
+      this._affectedNodes[id].forEach(function (nodeID) {
+        if (nodeID in nodes) {
+          nodes[nodeID].push([id, name]);
+        } else {
+          nodes[nodeID] = [[id, name]];
+        }
+      });
+    }
+    return nodes;
   },
 
   _getListElementForObjectWithID: function(id) {

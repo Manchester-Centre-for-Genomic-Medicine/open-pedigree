@@ -360,23 +360,23 @@ var PersonVisuals = Class.create(AbstractPersonVisuals, {
         if (age.indexOf('day') != -1) {
           text = age;                                                                // 5 days
         } else if (age.indexOf(' y') == -1) {
-          text = 'b. ' + person.getBirthDate().getFullYear() + ' (' + age + ')';     // b. 2014 (3 wk)
+          text = 'b. ' + person.getBirthDateDMY() + ' (' + age + ')';     // b. 2014 (3 wk)
         } else {
-          text = 'b. ' + person.getBirthDate().getFullYear();                        // b. 1972
+          text = 'b. ' + person.getBirthDateDMY();                        // b. 1972
         }
       }
     } else {
       if(person.getDeathDate() && person.getBirthDate()) {
         var age = getAge(person.getBirthDate(), person.getDeathDate());
         if (age.indexOf('day') != -1 || age.indexOf('wk') != -1 || age.indexOf('mo') != -1) {
-          text = 'd. ' + person.getDeathDate().getFullYear() + ' (' + age + ')';
+          text = 'd. ' + person.getDeathDateDMY() + ' (' + age + ')';
         } else {
-          text = person.getBirthDate().getFullYear() + ' – ' + person.getDeathDate().getFullYear();
+          text = person.getBirthDateDMY() + ' – ' + person.getDeathDateDMY();
         }
       } else if (person.getDeathDate()) {
-        text = 'd. ' + person.getDeathDate().getFullYear();
+        text = 'd. ' + person.getDeathDateDMY();
       } else if(person.getBirthDate()) {
-        text = person.getBirthDate().getFullYear() + ' – ?';
+        text = person.getBirthDateDMY() + ' – ?';
       }
     }
     this.getAgeLabel() && this.getAgeLabel().remove();

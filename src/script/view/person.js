@@ -49,6 +49,7 @@ var Person = Class.create(AbstractPerson, {
     this._gestationAge = '';
     this._isAdopted = false;
     this._externalID = '';
+    this._phenopacketID = '';
     this._lifeStatus = 'alive';
     this._childlessStatus = null;
     this._carrierStatus = '';
@@ -72,6 +73,26 @@ var Person = Class.create(AbstractPerson, {
      */
   _generateGraphics: function(x, y) {
     return new PersonVisuals(this, x, y);
+  },
+
+  /**
+     * Returns date as day/month/year string
+     *
+     * @method _getDateDMY
+     * @param {Date} dateObj Date object
+     * @return {String}
+     */
+  _getDateDMY: function(dateObj) {
+    var day = dateObj.getDate();
+    if (day < 10) {
+      day = '0' + day
+    }    
+    var month = dateObj.getMonth() + 1; //months from 1-12
+    if (month < 10) {
+      month = '0' + month
+    }
+    var year = dateObj.getFullYear();
+    return day + "/" + month + "/" + year;
   },
 
   /**
@@ -135,8 +156,12 @@ var Person = Class.create(AbstractPerson, {
      * @method getExternalID
      * @return {String}
      */
-  getExternalID: function() {
-    return this._externalID;
+  getExternalID: function(noSpaceFormat = false) {
+    if (!(noSpaceFormat) && this.isNHSNumber(this._externalID)) {
+      return this._externalID.substring(0,3) + ' ' + this._externalID.substring(3,6) + ' ' + this._externalID.substring(6,10);
+    } else {
+      return this._externalID;
+    }
   },
 
   /**
@@ -146,10 +171,62 @@ var Person = Class.create(AbstractPerson, {
      * @param externalID
      */
   setExternalID: function(externalID) {
-    this._externalID = externalID;
+    if (this.isNHSNumber(externalID)) {
+      this._externalID = externalID.replaceAll(' ', '');
+    } else {
+      this._externalID = externalID;
+    }
     this.getGraphics().updateExternalIDLabel();
   },
 
+  isNHSNumber: function (externalID) {
+    var isValid = true;
+    if (externalID.includes(' ')) {
+      var part_lengths = [];
+      var parts = externalID.split(' ');
+      parts.each(function(part){
+        part_lengths.push(part.length);
+        var num_part = Number(part);
+        if (!(Number.isInteger(num_part) && num_part > 0)) {
+          isValid = false;
+        }
+      });
+      if (part_lengths.length === 3) {
+        if (!(part_lengths[0] === 3 && part_lengths[1] === 3 && part_lengths[2] === 4)) {
+          isValid = false;
+        }
+      } else {
+        isValid = false;
+      }
+    } else {
+      var idNum = Number(externalID);
+      if (!(Number.isInteger(idNum) && externalID.length === 10)) {
+        isValid = false;
+      }
+    }
+    return isValid;
+  },
+
+  /**
+   * Returns the Gen-O Phenopacket ID of this Person
+   *
+   * @method getPhenopacketID
+   * @return {String}
+   */
+  getPhenopacketID: function() {
+    return this._phenopacketID;
+  },
+
+  /**
+     * Replaces the Phenopacket ID of this Person with the given ID
+     *
+     * @method setPhenopacketID
+     * @param phenopacketID
+     */
+   setPhenopacketID: function(phenopacketID) {
+    this._phenopacketID = phenopacketID;
+  },
+  
   /**
      * Replaces free-form comments associated with the node and redraws the label
      *
@@ -378,6 +455,21 @@ var Person = Class.create(AbstractPerson, {
   },
 
   /**
+     * Returns the the birth date of this Person in day/month/year format
+     *
+     * @method getBirthDateDMY
+     * @return {String}
+     */
+  getBirthDateDMY: function() {
+    if (this._birthDate) {
+      return this._getDateDMY(this._birthDate)
+    }
+    else {
+      return '';
+    }
+  },
+
+  /**
      * Replaces the birth date with newDate
      *
      * @method setBirthDate
@@ -401,6 +493,21 @@ var Person = Class.create(AbstractPerson, {
     return this._deathDate;
   },
 
+  /**
+     * Returns the the death date of this Person in day/month/year format
+     *
+     * @method getDeathDateDMY
+     * @return {String}
+     */
+   getDeathDateDMY: function() {
+    if (this._deathDate) {
+      return this._getDateDMY(this._deathDate)
+    }
+    else {
+      return '';
+    }
+  },
+      
   /**
      * Replaces the death date with deathDate
      *
@@ -483,14 +590,24 @@ var Person = Class.create(AbstractPerson, {
      * @return {Array of Strings}
      */
   getAllNodeColors: function() {
+    // Result contains colors only from the colored legends (getShowColors = true).
     var result = [];
-    for (var i = 0; i < this.getDisorders().length; i++) {
-      result.push(editor.getDisorderLegend().getObjectColor(this.getDisorders()[i]));
+    if (editor.getHPOLegend().getShowColors()) {
+      for (var i = 0; i < this.getHPO().length; i++) {
+        result.push(editor.getHPOLegend().getObjectColor(this.getHPO()[i]));
+      }
+    }
+    if (editor.getDisorderLegend().getShowColors()) {
+      for (var i = 0; i < this.getDisorders().length; i++) {
+        result.push(editor.getDisorderLegend().getObjectColor(this.getDisorders()[i]));
+      }
     }
     // Candidate genes are stored in "{ID} | {Symbol}" (e.g. DisplayName) in person object, 
     // but only symbols are used in gene legend.
-    for (var i = 0; i < this.getGeneSymbols().length; i++) {
-      result.push(editor.getGeneLegend().getObjectColor(this.getGeneSymbols()[i]));
+    if (editor.getGeneLegend().getShowColors()) {
+      for (var i = 0; i < this.getGeneSymbols().length; i++) {
+        result.push(editor.getGeneLegend().getObjectColor(this.getGeneSymbols()[i]));
+      }
     }
     return result;
   },
@@ -647,6 +764,7 @@ var Person = Class.create(AbstractPerson, {
     for(var i = 0; i < hpos.length; i++) {
       this.addHPO( hpos[i] );
     }
+    this.getGraphics().updateDisorderShapes();
   },
 
   /**
@@ -670,6 +788,7 @@ var Person = Class.create(AbstractPerson, {
       // Candidate genes are stored in "{ID} | {Symbol}" (e.g. DisplayName) in person object, 
       // but only symbols are used in gene legend.
       editor.getGeneLegend().addCase(gene.getSymbol(), gene.getSymbol(), this.getID());
+      editor.getGeneLegend().addHGNCID(gene.getSymbol(), gene.getID());
       this.getGenes().push(gene.getDisplayName());
     }
   },
@@ -845,6 +964,7 @@ var Person = Class.create(AbstractPerson, {
       first_name:    {value : this.getFirstName()},
       last_name:     {value : this.getLastName()},
       external_id:   {value : this.getExternalID()},
+      phenopacket_id: {value : this.getPhenopacketID()}, 
       gender:        {value : this.getGender(), inactive: inactiveGenders},
       date_of_birth: {value : this.getBirthDate(), inactive: this.isFetus()},
       carrier:       {value : this.getCarrierStatus(), disabled: inactiveCarriers},

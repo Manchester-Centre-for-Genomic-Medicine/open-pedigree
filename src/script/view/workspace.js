@@ -184,6 +184,11 @@ var Workspace = Class.create({
           { key : 'clear',  label : 'Clear all', icon : 'times-circle'}
         ]
       }, {
+        name : 'visual',
+        items: [
+          { key : 'switch-coloring',  label : 'Switch coloring', icon : 'palette'}
+        ]
+      }, {
         name : 'output',
         items: [
           { key : 'export',    label : 'Export', icon : 'file-export'},
@@ -199,7 +204,9 @@ var Workspace = Class.create({
       });
     };
     var _createMenuItem = function(data) {
-      var mi = new Element('span', {'id' : 'action-' + data.key, 'class' : 'menu-item ' + data.key}).insert(new Element('span', {'class' : 'fa fa-' + data.icon})).insert(' ').insert(data.label);
+      var mLabel = new Element('span');
+      mLabel.textContent = data.label;
+      var mi = new Element('span', {'id' : 'action-' + data.key, 'class' : 'menu-item ' + data.key}).insert(new Element('span', {'class' : 'fa fa-' + data.icon})).insert(' ').insert(mLabel);
       if (data.callback && typeof(this[data.callback]) == 'function') {
         mi.observe('click', function() {
           this[data.callback]();
