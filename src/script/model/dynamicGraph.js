@@ -1624,7 +1624,7 @@ DynamicPositionedGraph.prototype = {
   },
 
   _findRightmostChildPosition: function ( vertex ) {
-    var childrenInfo = this._heuristics.analizeChildren(vertex);
+    var childrenInfo = this._heuristics.analyzeChildren(vertex);
     return childrenInfo.rightMostChildOrder;
   },
 
@@ -1646,7 +1646,7 @@ DynamicPositionedGraph.prototype = {
     var vSibglingInfo = undefined;
     if (this.DG.GG.isChildhub(existingU) && (newVRank > existingURank) &&
             this.DG.GG.getOutEdges(existingU).length > 0) {
-      vSibglingInfo = this._heuristics.analizeChildren(existingU);
+      vSibglingInfo = this._heuristics.analyzeChildren(existingU);
 
       if (vSibglingInfo.numWithTwoPartners < vSibglingInfo.orderedChildren.length) {
         // need to insert new node next to a sibling
@@ -1704,7 +1704,7 @@ DynamicPositionedGraph.prototype = {
           penalty = 100000;
           // ...unless siblings of the inserted node are already inbetween those siblings:
           if (vSibglingInfo) {
-            var targetChildren = this._heuristics.analizeChildren(target);
+            var targetChildren = this._heuristics.analyzeChildren(target);
 
             if (targetChildren.leftMostChildOrder < vSibglingInfo.rightMostChildOrder &&
                             targetChildren.rightMostChildOrder > vSibglingInfo.leftMostChildOrder) {
@@ -1786,7 +1786,7 @@ DynamicPositionedGraph.prototype = {
       if (!this.isRelationship(node)) {
         continue;
       }
-      var childrenInfo = this._heuristics.analizeChildren(node);
+      var childrenInfo = this._heuristics.analyzeChildren(node);
 
       // TODO: do a complete analysis without any heuristics
       if (childrenInfo.leftMostHasLParner)  {
@@ -2051,7 +2051,7 @@ Heuristics.prototype = {
 
     var toTheLeft = (order < partnerOrder);
 
-    var childrenPartners = this.analizeChildren(childhubId);
+    var childrenPartners = this.analyzeChildren(childhubId);
 
     if ( (toTheLeft  && childrenPartners.leftMostHasLParner  && !childrenPartners.rightMostHasRParner) ||
              (!toTheLeft && childrenPartners.rightMostHasRParner && !childrenPartners.leftMostHasLParner) ||
@@ -2070,13 +2070,13 @@ Heuristics.prototype = {
     //TODO
   },
 
-  analizeChildren: function (childhubId) {
+  analyzeChildren: function (childhubId) {
     if (this.DG.GG.isRelationship(childhubId)) {
       childhubId = this.DG.GG.getOutEdges(childhubId)[0];
     }
 
     if (!this.DG.GG.isChildhub(childhubId)) {
-      throw 'Assertion failed: applying analizeChildren() not to a childhub';
+      throw 'Assertion failed: applying analyzeChildren() not to a childhub';
     }
 
     var children = this.DG.GG.getOutEdges(childhubId);
@@ -2263,7 +2263,7 @@ Heuristics.prototype = {
 
     // 2. check where the partner stands among its siblings
     var partnerChildhubId   = this.DG.GG.getInEdges(partnerId)[0];
-    var partnerSibglingInfo = this.analizeChildren(partnerChildhubId);
+    var partnerSibglingInfo = this.analyzeChildren(partnerChildhubId);
 
     //if (partnerSibglingInfo.orderedChildren.length == 1) return; // just one sibling, nothing to do
     if (partnerSibglingInfo.orderedChildren.length > 1) {
@@ -2319,7 +2319,7 @@ Heuristics.prototype = {
     // 3. check how deep the tree below is.
     //    do nothing if any children have partners (too complicated for a heuristic)
     var childHubBelow = this.DG.GG.getRelationshipChildhub(relationshipId);
-    var childrenInfo  = this.analizeChildren(childHubBelow);
+    var childrenInfo  = this.analyzeChildren(childHubBelow);
     if (childrenInfo.numWithPartners > 0) {
       return;
     }  // too complicated for a heuristic
@@ -2592,7 +2592,7 @@ Heuristics.prototype = {
         var relX      = xcoord.xcoord[v];
         var childhubX = xcoord.xcoord[childhub];
 
-        var childInfo = this.analizeChildren(childhub);
+        var childInfo = this.analyzeChildren(childhub);
 
         var misalignment = 0;
 
@@ -2898,7 +2898,7 @@ Heuristics.prototype = {
 
           // either move V and nodes connected to V left, or rightNeighbour and nodes connected to it right
           // (in both cases "connected" means "connected not using edges spanning V-rightNeighbour gap")
-          // If maxComponentSize is not limited, then no point to analize other component, since
+          // If maxComponentSize is not limited, then no point to analyze other component, since
           var stopSet = {};
           stopSet[rightNeighbour] = true;
           var component = this.DG.findConnectedComponent(v, excludeEdgesSpanningOrder, stopSet, maxComponentSize );
@@ -2952,7 +2952,7 @@ Heuristics.prototype = {
 
             var childhubX = xcoord.xcoord[v];
 
-            var childInfo = this.analizeChildren(v);
+            var childInfo = this.analyzeChildren(v);
             // Skip in case of childless couples
             if (!childInfo) {
               continue;
@@ -3146,7 +3146,7 @@ Heuristics.prototype = {
         }
 
         // move children as not to break the supposedly nice layout
-        var childInfo    = this.analizeChildren(nextV);
+        var childInfo    = this.analyzeChildren(nextV);
         // Skip in case of childless couples
         if (!childInfo) {
           continue
@@ -3225,7 +3225,7 @@ Heuristics.prototype = {
             continue;
           }
 
-          var childInfo    = this.analizeChildren(chhub);
+          var childInfo    = this.analyzeChildren(chhub);
           var positionInfo = this._computeDesiredChildhubLocation( childInfo, xcoord, nodes, shiftSize );
           var childhubX    = xcoord.xcoord[chhub];
           // if it will become OK - no move
