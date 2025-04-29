@@ -1624,7 +1624,7 @@ DynamicPositionedGraph.prototype = {
   },
 
   _findRightmostChildPosition: function ( vertex ) {
-    var childrenInfo = this._heuristics.analizeChildren(vertex);
+    var childrenInfo = this._heuristics.analyzeChildren(vertex);
     return childrenInfo.rightMostChildOrder;
   },
 
@@ -1643,12 +1643,12 @@ DynamicPositionedGraph.prototype = {
     var orderTo   = (newVRank < existingURank) ? existingUOrder : newVOrder;
 
     // for better penalty computation handle the special case of adding a new child to an existing childhub
-    var vSibglingInfo = undefined;
+    var vSiblingInfo = undefined;
     if (this.DG.GG.isChildhub(existingU) && (newVRank > existingURank) &&
             this.DG.GG.getOutEdges(existingU).length > 0) {
-      vSibglingInfo = this._heuristics.analizeChildren(existingU);
+      vSiblingInfo = this._heuristics.analyzeChildren(existingU);
 
-      if (vSibglingInfo.numWithTwoPartners < vSibglingInfo.orderedChildren.length) {
+      if (vSiblingInfo.numWithTwoPartners < vSiblingInfo.orderedChildren.length) {
         // need to insert new node next to a sibling
         var okPosition = false;
         if (newVOrder > 0) {                                         // check left neighbour
@@ -1703,11 +1703,11 @@ DynamicPositionedGraph.prototype = {
           // don't want to insert a node inbetween siblings
           penalty = 100000;
           // ...unless siblings of the inserted node are already inbetween those siblings:
-          if (vSibglingInfo) {
-            var targetChildren = this._heuristics.analizeChildren(target);
+          if (vSiblingInfo) {
+            var targetChildren = this._heuristics.analyzeChildren(target);
 
-            if (targetChildren.leftMostChildOrder < vSibglingInfo.rightMostChildOrder &&
-                            targetChildren.rightMostChildOrder > vSibglingInfo.leftMostChildOrder) {
+            if (targetChildren.leftMostChildOrder < vSiblingInfo.rightMostChildOrder &&
+                            targetChildren.rightMostChildOrder > vSiblingInfo.leftMostChildOrder) {
               penalty = 1;
             }
           }
@@ -1786,13 +1786,13 @@ DynamicPositionedGraph.prototype = {
       if (!this.isRelationship(node)) {
         continue;
       }
-      var childrenInfo = this._heuristics.analizeChildren(node);
+      var childrenInfo = this._heuristics.analyzeChildren(node);
 
       // TODO: do a complete analysis without any heuristics
-      if (childrenInfo.leftMostHasLParner)  {
+      if (childrenInfo.leftMostHasLPartner)  {
         penaltyBelow[o]   += 1; penaltyBelow[o-1] += 0.25; 
       }   // 0.25 is just a heuristic estimation of how busy the level below is.
-      if (childrenInfo.rightMostHasRParner) {
+      if (childrenInfo.rightMostHasRPartner) {
         penaltyBelow[o+1] += 1; penaltyBelow[o+2] += 0.25; 
       }
     }
@@ -1992,9 +1992,9 @@ var Heuristics = function( drawGraph ) {
 Heuristics.prototype = {
 
   swapPartnerToBringToSideIfPossible: function ( personId ) {
-    // attempts to swap this person with it's existing partner if the swap makes the not-yet-parnered
+    // attempts to swap this person with it's existing partner if the swap makes the not-yet-partnered
     // side of the person on the side which favours child insertion (e.g. the side where the child closest
-    // to the side has no parners)
+    // to the side has no partners)
 
     if (this.DG.GG.getTwinGroupId(personId) !== null) {
       return;
@@ -2007,19 +2007,19 @@ Heuristics.prototype = {
       return;
     } // node on one of the sides: can do well without nay swaps
 
-    var parnetships = this.DG.GG.getAllRelationships(personId);
-    if (parnetships.length != 1) {
+    var partnerships = this.DG.GG.getAllRelationships(personId);
+    if (partnerships.length != 1) {
       return;
-    }    // only if have exactly one parner
-    var relationship = parnetships[0];
+    }    // only if have exactly one partner
+    var relationship = partnerships[0];
     var relOrder     = this.DG.order.vOrder[relationship];
 
     var partners  = this.DG.GG.getParents(relationship);
     var partnerId = (partners[0] == personId) ? partners[1] : partners[0];  // the only partner of personId
-    var parnerOutEdges = this.DG.GG.getOutEdges(partnerId);
-    if (parnerOutEdges.length != 1) {
+    var partnerOutEdges = this.DG.GG.getOutEdges(partnerId);
+    if (partnerOutEdges.length != 1) {
       return;
-    }  // only if parner also has exactly one parner (which is personId)
+    }  // only if partner also has exactly one partner (which is personId)
 
     if (this.DG.ranks[personId] != this.DG.ranks[partnerId]) {
       return;
@@ -2046,17 +2046,17 @@ Heuristics.prototype = {
     // TODO: count how many edges will be crossed in each case and also swap if we save a few crossings?
 
     // idea:
-    // if (to the left  of parner && leftmostChild  has parner to the left  && rightmostchid has no parner to the right) -> swap
-    // if (to the right of parner && rightmostChild has parner to the right && leftmostchid  has no parner to the left) -> swap
+    // if (to the left  of partner && leftmostChild  has partner to the left  && rightmostchid has no partner to the right) -> swap
+    // if (to the right of partner && rightmostChild has partner to the right && leftmostchid  has no partner to the left) -> swap
 
     var toTheLeft = (order < partnerOrder);
 
-    var childrenPartners = this.analizeChildren(childhubId);
+    var childrenPartners = this.analyzeChildren(childhubId);
 
-    if ( (toTheLeft  && childrenPartners.leftMostHasLParner  && !childrenPartners.rightMostHasRParner) ||
-             (!toTheLeft && childrenPartners.rightMostHasRParner && !childrenPartners.leftMostHasLParner) ||
-             (order == 2 && childrenPartners.rightMostHasRParner) ||
-             (order == this.DG.order.order[rank].length - 3 && childrenPartners.leftMostHasLParner) ) {
+    if ( (toTheLeft  && childrenPartners.leftMostHasLPartner  && !childrenPartners.rightMostHasRPartner) ||
+             (!toTheLeft && childrenPartners.rightMostHasRPartner && !childrenPartners.leftMostHasLPartner) ||
+             (order == 2 && childrenPartners.rightMostHasRPartner) ||
+             (order == this.DG.order.order[rank].length - 3 && childrenPartners.leftMostHasLPartner) ) {
       this.swapPartners( personId, partnerId, relationship );  // updates orders + positions
     }
   },
@@ -2070,18 +2070,18 @@ Heuristics.prototype = {
     //TODO
   },
 
-  analizeChildren: function (childhubId) {
+  analyzeChildren: function (childhubId) {
     if (this.DG.GG.isRelationship(childhubId)) {
       childhubId = this.DG.GG.getOutEdges(childhubId)[0];
     }
 
     if (!this.DG.GG.isChildhub(childhubId)) {
-      throw 'Assertion failed: applying analizeChildren() not to a childhub';
+      throw 'Assertion failed: applying analyzeChildren() not to a childhub';
     }
 
     var children = this.DG.GG.getOutEdges(childhubId);
 
-    if (children.length == 0) {
+    if (!children || children.length == 0) {
       return;
     }
 
@@ -2090,10 +2090,10 @@ Heuristics.prototype = {
     var numWithTwoPartners  = 0;
     var leftMostChildId     = undefined;
     var leftMostChildOrder  = Infinity;
-    var leftMostHasLParner  = false;
+    var leftMostHasLPartner  = false;
     var rightMostChildId    = undefined;
     var rightMostChildOrder = -Infinity;
-    var rightMostHasRParner = false;
+    var rightMostHasRPartner = false;
     for (var i = 0; i < children.length; i++) {
       var childId = children[i];
       var order   = this.DG.order.vOrder[childId];
@@ -2101,12 +2101,12 @@ Heuristics.prototype = {
       if (order < leftMostChildOrder) {
         leftMostChildId    = childId;
         leftMostChildOrder = order;
-        leftMostHasLParner = this.hasParnerBetweenOrders(childId, 0, order-1);  // has partner to the left
+        leftMostHasLPartner = this.hasPartnerBetweenOrders(childId, 0, order-1);  // has partner to the left
       }
       if (order > rightMostChildOrder) {
         rightMostChildId    = childId;
         rightMostChildOrder = order;
-        rightMostHasRParner = this.hasParnerBetweenOrders(childId, order+1, Infinity);  // has partner to the right
+        rightMostHasRPartner = this.hasPartnerBetweenOrders(childId, order+1, Infinity);  // has partner to the right
       }
       if (this.DG.GG.getOutEdges(childId).length > 0) {
         havePartners[childId] = true;
@@ -2119,19 +2119,21 @@ Heuristics.prototype = {
 
     var orderedChildren = this.DG.order.sortByOrder(children);
 
-    return {'leftMostHasLParner' : leftMostHasLParner,
-      'leftMostChildId'    : leftMostChildId,
-      'leftMostChildOrder' : leftMostChildOrder,
-      'rightMostHasRParner': rightMostHasRParner,
-      'rightMostChildId'   : rightMostChildId,
+    return {
+      'leftMostHasLPartner': leftMostHasLPartner ?? false,
+      'leftMostChildId': leftMostChildId,
+      'leftMostChildOrder': leftMostChildOrder,
+      'rightMostHasRPartner': rightMostHasRPartner ?? false,
+      'rightMostChildId': rightMostChildId,
       'rightMostChildOrder': rightMostChildOrder,
-      'withPartnerSet'     : havePartners,
-      'numWithPartners'    : numWithPartners,
-      'numWithTwoPartners' : numWithTwoPartners,
-      'orderedChildren'    : orderedChildren };
+      'withPartnerSet': havePartners,
+      'numWithPartners': numWithPartners,
+      'numWithTwoPartners': numWithTwoPartners,
+      'orderedChildren': orderedChildren
+    };
   },
 
-  hasParnerBetweenOrders: function( personId, minOrder, maxOrder ) {
+  hasPartnerBetweenOrders: function( personId, minOrder, maxOrder ) {
     var rank  = this.DG.ranks[personId];
     var order = this.DG.order.vOrder[personId];
 
@@ -2233,11 +2235,11 @@ Heuristics.prototype = {
     // space above for new parents of this node
 
     // 1. check that we have exactly one partner and it has parents - if not nothing to move
-    var parnetships = this.DG.GG.getAllRelationships(personId);
-    if (parnetships.length != 1) {
+    var partnerships = this.DG.GG.getAllRelationships(personId);
+    if (partnerships.length != 1) {
       return;
     }
-    var relationshipId = parnetships[0];
+    var relationshipId = partnerships[0];
 
     var partners  = this.DG.GG.getParents(relationshipId);
     var partnerId = (partners[0] == personId) ? partners[1] : partners[0];  // the only partner of personId
@@ -2263,22 +2265,22 @@ Heuristics.prototype = {
 
     // 2. check where the partner stands among its siblings
     var partnerChildhubId   = this.DG.GG.getInEdges(partnerId)[0];
-    var partnerSibglingInfo = this.analizeChildren(partnerChildhubId);
+    var partnerSiblingInfo = this.analyzeChildren(partnerChildhubId);
 
-    //if (partnerSibglingInfo.orderedChildren.length == 1) return; // just one sibling, nothing to do
-    if (partnerSibglingInfo.orderedChildren.length > 1) {
+    //if (partnerSiblingInfo.orderedChildren.length == 1) return; // just one sibling, nothing to do
+    if (partnerSiblingInfo.orderedChildren.length > 1) {
       // simple cases:  ...
       //                 |
       //       +---------+-----------|
       //       |                     |
       //   [sibling]--[personID]  [sibling]
-      if (partnerSibglingInfo.leftMostChildId == partnerId) {
+      if (partnerSiblingInfo.leftMostChildId == partnerId) {
         if (!toTheLeft) {
           this.swapPartners( personId, partnerId, relationshipId );
         }
         return;
       }
-      if (partnerSibglingInfo.rightMostChildId == partnerId) {
+      if (partnerSiblingInfo.rightMostChildId == partnerId) {
         if (toTheLeft) {
           this.swapPartners( personId, partnerId, relationshipId );
         }
@@ -2302,7 +2304,7 @@ Heuristics.prototype = {
       return;
     }
 
-    if (partnerSibglingInfo.orderedChildren.length == 1) {
+    if (partnerSiblingInfo.orderedChildren.length == 1) {
       if (numLeftPartners == 1 && numRightPartners == 1) {
         // no need to move anything enywhere, we are fine as we are now
         return;
@@ -2319,7 +2321,7 @@ Heuristics.prototype = {
     // 3. check how deep the tree below is.
     //    do nothing if any children have partners (too complicated for a heuristic)
     var childHubBelow = this.DG.GG.getRelationshipChildhub(relationshipId);
-    var childrenInfo  = this.analizeChildren(childHubBelow);
+    var childrenInfo  = this.analyzeChildren(childHubBelow);
     if (childrenInfo.numWithPartners > 0) {
       return;
     }  // too complicated for a heuristic
@@ -2328,32 +2330,32 @@ Heuristics.prototype = {
     //    check if we can move it right or left easily:
     //    move to the right iff: rightmostchild has no partners && rightParent has no partners
     //    move to the left iff: leftmostchild has no partners && leftParent has no partners
-    if (numRightPartners == 1 && !partnerSibglingInfo.rightMostHasRParner) {
-      for (var c = partnerSibglingInfo.orderedChildren.length - 1; c >= 0; c--) {
-        var sibling = partnerSibglingInfo.orderedChildren[c];
+    if (numRightPartners == 1 && !partnerSiblingInfo.rightMostHasRPartner) {
+      for (var c = partnerSiblingInfo.orderedChildren.length - 1; c >= 0; c--) {
+        var sibling = partnerSiblingInfo.orderedChildren[c];
         if (sibling == partnerId) {
           if (toTheLeft) {
             this.swapPartners( personId, partnerId, relationshipId );
           }
-          this.moveSiblingPlusPartnerToOrder( personId, partnerId, relationshipId, partnerSibglingInfo.rightMostChildOrder);
+          this.moveSiblingPlusPartnerToOrder( personId, partnerId, relationshipId, partnerSiblingInfo.rightMostChildOrder);
           return;
         }
-        if (partnerSibglingInfo.withPartnerSet.hasOwnProperty(sibling)) {
+        if (partnerSiblingInfo.withPartnerSet.hasOwnProperty(sibling)) {
           break;
         } // does not work on this side
       }
     }
-    if (numLeftPartners == 1 && !partnerSibglingInfo.leftMostHasLParner) {
-      for (var c = 0; c < partnerSibglingInfo.orderedChildren.length; c++) {
-        var sibling = partnerSibglingInfo.orderedChildren[c];
+    if (numLeftPartners == 1 && !partnerSiblingInfo.leftMostHasLPartner) {
+      for (var c = 0; c < partnerSiblingInfo.orderedChildren.length; c++) {
+        var sibling = partnerSiblingInfo.orderedChildren[c];
         if (sibling == partnerId) {
           if (!toTheLeft) {
             this.swapPartners( personId, partnerId, relationshipId );
           }
-          this.moveSiblingPlusPartnerToOrder( personId, partnerId, relationshipId, partnerSibglingInfo.leftMostChildOrder);
+          this.moveSiblingPlusPartnerToOrder( personId, partnerId, relationshipId, partnerSiblingInfo.leftMostChildOrder);
           return;
         }
-        if (partnerSibglingInfo.withPartnerSet.hasOwnProperty(sibling)) {
+        if (partnerSiblingInfo.withPartnerSet.hasOwnProperty(sibling)) {
           break;
         } // does not work on this side
       }
@@ -2592,7 +2594,7 @@ Heuristics.prototype = {
         var relX      = xcoord.xcoord[v];
         var childhubX = xcoord.xcoord[childhub];
 
-        var childInfo = this.analizeChildren(childhub);
+        var childInfo = this.analyzeChildren(childhub);
 
         var misalignment = 0;
 
@@ -2898,7 +2900,7 @@ Heuristics.prototype = {
 
           // either move V and nodes connected to V left, or rightNeighbour and nodes connected to it right
           // (in both cases "connected" means "connected not using edges spanning V-rightNeighbour gap")
-          // If maxComponentSize is not limited, then no point to analize other component, since
+          // If maxComponentSize is not limited, then no point to analyze other component, since
           var stopSet = {};
           stopSet[rightNeighbour] = true;
           var component = this.DG.findConnectedComponent(v, excludeEdgesSpanningOrder, stopSet, maxComponentSize );
@@ -2952,7 +2954,7 @@ Heuristics.prototype = {
 
             var childhubX = xcoord.xcoord[v];
 
-            var childInfo = this.analizeChildren(v);
+            var childInfo = this.analyzeChildren(v);
             // Skip in case of childless couples
             if (!childInfo) {
               continue;
@@ -3146,7 +3148,7 @@ Heuristics.prototype = {
         }
 
         // move children as not to break the supposedly nice layout
-        var childInfo    = this.analizeChildren(nextV);
+        var childInfo    = this.analyzeChildren(nextV);
         // Skip in case of childless couples
         if (!childInfo) {
           continue
@@ -3225,7 +3227,7 @@ Heuristics.prototype = {
             continue;
           }
 
-          var childInfo    = this.analizeChildren(chhub);
+          var childInfo    = this.analyzeChildren(chhub);
           var positionInfo = this._computeDesiredChildhubLocation( childInfo, xcoord, nodes, shiftSize );
           var childhubX    = xcoord.xcoord[chhub];
           // if it will become OK - no move
