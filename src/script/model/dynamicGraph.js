@@ -2119,16 +2119,18 @@ Heuristics.prototype = {
 
     var orderedChildren = this.DG.order.sortByOrder(children);
 
-    return {'leftMostHasLPartner' : leftMostHasLPartner,
-      'leftMostChildId'    : leftMostChildId,
-      'leftMostChildOrder' : leftMostChildOrder,
-      'rightMostHasRPartner': rightMostHasRPartner,
-      'rightMostChildId'   : rightMostChildId,
+    return {
+      'leftMostHasLPartner': leftMostHasLPartner ?? false,
+      'leftMostChildId': leftMostChildId,
+      'leftMostChildOrder': leftMostChildOrder,
+      'rightMostHasRPartner': rightMostHasRPartner ?? false,
+      'rightMostChildId': rightMostChildId,
       'rightMostChildOrder': rightMostChildOrder,
-      'withPartnerSet'     : havePartners,
-      'numWithPartners'    : numWithPartners,
-      'numWithTwoPartners' : numWithTwoPartners,
-      'orderedChildren'    : orderedChildren };
+      'withPartnerSet': havePartners,
+      'numWithPartners': numWithPartners,
+      'numWithTwoPartners': numWithTwoPartners,
+      'orderedChildren': orderedChildren
+    };
   },
 
   hasPartnerBetweenOrders: function( personId, minOrder, maxOrder ) {
