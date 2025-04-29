@@ -1643,12 +1643,12 @@ DynamicPositionedGraph.prototype = {
     var orderTo   = (newVRank < existingURank) ? existingUOrder : newVOrder;
 
     // for better penalty computation handle the special case of adding a new child to an existing childhub
-    var vSibglingInfo = undefined;
+    var vSiblingInfo = undefined;
     if (this.DG.GG.isChildhub(existingU) && (newVRank > existingURank) &&
             this.DG.GG.getOutEdges(existingU).length > 0) {
-      vSibglingInfo = this._heuristics.analyzeChildren(existingU);
+      vSiblingInfo = this._heuristics.analyzeChildren(existingU);
 
-      if (vSibglingInfo.numWithTwoPartners < vSibglingInfo.orderedChildren.length) {
+      if (vSiblingInfo.numWithTwoPartners < vSiblingInfo.orderedChildren.length) {
         // need to insert new node next to a sibling
         var okPosition = false;
         if (newVOrder > 0) {                                         // check left neighbour
@@ -1703,11 +1703,11 @@ DynamicPositionedGraph.prototype = {
           // don't want to insert a node inbetween siblings
           penalty = 100000;
           // ...unless siblings of the inserted node are already inbetween those siblings:
-          if (vSibglingInfo) {
+          if (vSiblingInfo) {
             var targetChildren = this._heuristics.analyzeChildren(target);
 
-            if (targetChildren.leftMostChildOrder < vSibglingInfo.rightMostChildOrder &&
-                            targetChildren.rightMostChildOrder > vSibglingInfo.leftMostChildOrder) {
+            if (targetChildren.leftMostChildOrder < vSiblingInfo.rightMostChildOrder &&
+                            targetChildren.rightMostChildOrder > vSiblingInfo.leftMostChildOrder) {
               penalty = 1;
             }
           }
@@ -2263,22 +2263,22 @@ Heuristics.prototype = {
 
     // 2. check where the partner stands among its siblings
     var partnerChildhubId   = this.DG.GG.getInEdges(partnerId)[0];
-    var partnerSibglingInfo = this.analyzeChildren(partnerChildhubId);
+    var partnerSiblingInfo = this.analyzeChildren(partnerChildhubId);
 
-    //if (partnerSibglingInfo.orderedChildren.length == 1) return; // just one sibling, nothing to do
-    if (partnerSibglingInfo.orderedChildren.length > 1) {
+    //if (partnerSiblingInfo.orderedChildren.length == 1) return; // just one sibling, nothing to do
+    if (partnerSiblingInfo.orderedChildren.length > 1) {
       // simple cases:  ...
       //                 |
       //       +---------+-----------|
       //       |                     |
       //   [sibling]--[personID]  [sibling]
-      if (partnerSibglingInfo.leftMostChildId == partnerId) {
+      if (partnerSiblingInfo.leftMostChildId == partnerId) {
         if (!toTheLeft) {
           this.swapPartners( personId, partnerId, relationshipId );
         }
         return;
       }
-      if (partnerSibglingInfo.rightMostChildId == partnerId) {
+      if (partnerSiblingInfo.rightMostChildId == partnerId) {
         if (toTheLeft) {
           this.swapPartners( personId, partnerId, relationshipId );
         }
@@ -2302,7 +2302,7 @@ Heuristics.prototype = {
       return;
     }
 
-    if (partnerSibglingInfo.orderedChildren.length == 1) {
+    if (partnerSiblingInfo.orderedChildren.length == 1) {
       if (numLeftPartners == 1 && numRightPartners == 1) {
         // no need to move anything enywhere, we are fine as we are now
         return;
@@ -2328,32 +2328,32 @@ Heuristics.prototype = {
     //    check if we can move it right or left easily:
     //    move to the right iff: rightmostchild has no partners && rightParent has no partners
     //    move to the left iff: leftmostchild has no partners && leftParent has no partners
-    if (numRightPartners == 1 && !partnerSibglingInfo.rightMostHasRParner) {
-      for (var c = partnerSibglingInfo.orderedChildren.length - 1; c >= 0; c--) {
-        var sibling = partnerSibglingInfo.orderedChildren[c];
+    if (numRightPartners == 1 && !partnerSiblingInfo.rightMostHasRParner) {
+      for (var c = partnerSiblingInfo.orderedChildren.length - 1; c >= 0; c--) {
+        var sibling = partnerSiblingInfo.orderedChildren[c];
         if (sibling == partnerId) {
           if (toTheLeft) {
             this.swapPartners( personId, partnerId, relationshipId );
           }
-          this.moveSiblingPlusPartnerToOrder( personId, partnerId, relationshipId, partnerSibglingInfo.rightMostChildOrder);
+          this.moveSiblingPlusPartnerToOrder( personId, partnerId, relationshipId, partnerSiblingInfo.rightMostChildOrder);
           return;
         }
-        if (partnerSibglingInfo.withPartnerSet.hasOwnProperty(sibling)) {
+        if (partnerSiblingInfo.withPartnerSet.hasOwnProperty(sibling)) {
           break;
         } // does not work on this side
       }
     }
-    if (numLeftPartners == 1 && !partnerSibglingInfo.leftMostHasLParner) {
-      for (var c = 0; c < partnerSibglingInfo.orderedChildren.length; c++) {
-        var sibling = partnerSibglingInfo.orderedChildren[c];
+    if (numLeftPartners == 1 && !partnerSiblingInfo.leftMostHasLParner) {
+      for (var c = 0; c < partnerSiblingInfo.orderedChildren.length; c++) {
+        var sibling = partnerSiblingInfo.orderedChildren[c];
         if (sibling == partnerId) {
           if (!toTheLeft) {
             this.swapPartners( personId, partnerId, relationshipId );
           }
-          this.moveSiblingPlusPartnerToOrder( personId, partnerId, relationshipId, partnerSibglingInfo.leftMostChildOrder);
+          this.moveSiblingPlusPartnerToOrder( personId, partnerId, relationshipId, partnerSiblingInfo.leftMostChildOrder);
           return;
         }
-        if (partnerSibglingInfo.withPartnerSet.hasOwnProperty(sibling)) {
+        if (partnerSiblingInfo.withPartnerSet.hasOwnProperty(sibling)) {
           break;
         } // does not work on this side
       }
