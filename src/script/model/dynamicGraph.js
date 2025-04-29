@@ -1994,7 +1994,7 @@ Heuristics.prototype = {
   swapPartnerToBringToSideIfPossible: function ( personId ) {
     // attempts to swap this person with it's existing partner if the swap makes the not-yet-parnered
     // side of the person on the side which favours child insertion (e.g. the side where the child closest
-    // to the side has no parners)
+    // to the side has no partners)
 
     if (this.DG.GG.getTwinGroupId(personId) !== null) {
       return;
@@ -2007,11 +2007,11 @@ Heuristics.prototype = {
       return;
     } // node on one of the sides: can do well without nay swaps
 
-    var parnetships = this.DG.GG.getAllRelationships(personId);
-    if (parnetships.length != 1) {
+    var partnerships = this.DG.GG.getAllRelationships(personId);
+    if (partnerships.length != 1) {
       return;
     }    // only if have exactly one parner
-    var relationship = parnetships[0];
+    var relationship = partnerships[0];
     var relOrder     = this.DG.order.vOrder[relationship];
 
     var partners  = this.DG.GG.getParents(relationship);
@@ -2233,11 +2233,11 @@ Heuristics.prototype = {
     // space above for new parents of this node
 
     // 1. check that we have exactly one partner and it has parents - if not nothing to move
-    var parnetships = this.DG.GG.getAllRelationships(personId);
-    if (parnetships.length != 1) {
+    var partnerships = this.DG.GG.getAllRelationships(personId);
+    if (partnerships.length != 1) {
       return;
     }
-    var relationshipId = parnetships[0];
+    var relationshipId = partnerships[0];
 
     var partners  = this.DG.GG.getParents(relationshipId);
     var partnerId = (partners[0] == personId) ? partners[1] : partners[0];  // the only partner of personId
