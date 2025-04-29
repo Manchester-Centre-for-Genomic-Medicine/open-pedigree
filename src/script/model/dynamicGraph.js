@@ -1789,10 +1789,10 @@ DynamicPositionedGraph.prototype = {
       var childrenInfo = this._heuristics.analyzeChildren(node);
 
       // TODO: do a complete analysis without any heuristics
-      if (childrenInfo.leftMostHasLParner)  {
+      if (childrenInfo.leftMostHasLPartner)  {
         penaltyBelow[o]   += 1; penaltyBelow[o-1] += 0.25; 
       }   // 0.25 is just a heuristic estimation of how busy the level below is.
-      if (childrenInfo.rightMostHasRParner) {
+      if (childrenInfo.rightMostHasRPartner) {
         penaltyBelow[o+1] += 1; penaltyBelow[o+2] += 0.25; 
       }
     }
@@ -1992,7 +1992,7 @@ var Heuristics = function( drawGraph ) {
 Heuristics.prototype = {
 
   swapPartnerToBringToSideIfPossible: function ( personId ) {
-    // attempts to swap this person with it's existing partner if the swap makes the not-yet-parnered
+    // attempts to swap this person with it's existing partner if the swap makes the not-yet-partnered
     // side of the person on the side which favours child insertion (e.g. the side where the child closest
     // to the side has no partners)
 
@@ -2010,16 +2010,16 @@ Heuristics.prototype = {
     var partnerships = this.DG.GG.getAllRelationships(personId);
     if (partnerships.length != 1) {
       return;
-    }    // only if have exactly one parner
+    }    // only if have exactly one partner
     var relationship = partnerships[0];
     var relOrder     = this.DG.order.vOrder[relationship];
 
     var partners  = this.DG.GG.getParents(relationship);
     var partnerId = (partners[0] == personId) ? partners[1] : partners[0];  // the only partner of personId
-    var parnerOutEdges = this.DG.GG.getOutEdges(partnerId);
-    if (parnerOutEdges.length != 1) {
+    var partnerOutEdges = this.DG.GG.getOutEdges(partnerId);
+    if (partnerOutEdges.length != 1) {
       return;
-    }  // only if parner also has exactly one parner (which is personId)
+    }  // only if partner also has exactly one partner (which is personId)
 
     if (this.DG.ranks[personId] != this.DG.ranks[partnerId]) {
       return;
@@ -2046,17 +2046,17 @@ Heuristics.prototype = {
     // TODO: count how many edges will be crossed in each case and also swap if we save a few crossings?
 
     // idea:
-    // if (to the left  of parner && leftmostChild  has parner to the left  && rightmostchid has no parner to the right) -> swap
-    // if (to the right of parner && rightmostChild has parner to the right && leftmostchid  has no parner to the left) -> swap
+    // if (to the left  of partner && leftmostChild  has partner to the left  && rightmostchid has no partner to the right) -> swap
+    // if (to the right of partner && rightmostChild has partner to the right && leftmostchid  has no partner to the left) -> swap
 
     var toTheLeft = (order < partnerOrder);
 
     var childrenPartners = this.analyzeChildren(childhubId);
 
-    if ( (toTheLeft  && childrenPartners.leftMostHasLParner  && !childrenPartners.rightMostHasRParner) ||
-             (!toTheLeft && childrenPartners.rightMostHasRParner && !childrenPartners.leftMostHasLParner) ||
-             (order == 2 && childrenPartners.rightMostHasRParner) ||
-             (order == this.DG.order.order[rank].length - 3 && childrenPartners.leftMostHasLParner) ) {
+    if ( (toTheLeft  && childrenPartners.leftMostHasLPartner  && !childrenPartners.rightMostHasRPartner) ||
+             (!toTheLeft && childrenPartners.rightMostHasRPartner && !childrenPartners.leftMostHasLPartner) ||
+             (order == 2 && childrenPartners.rightMostHasRPartner) ||
+             (order == this.DG.order.order[rank].length - 3 && childrenPartners.leftMostHasLPartner) ) {
       this.swapPartners( personId, partnerId, relationship );  // updates orders + positions
     }
   },
@@ -2090,10 +2090,10 @@ Heuristics.prototype = {
     var numWithTwoPartners  = 0;
     var leftMostChildId     = undefined;
     var leftMostChildOrder  = Infinity;
-    var leftMostHasLParner  = false;
+    var leftMostHasLPartner  = false;
     var rightMostChildId    = undefined;
     var rightMostChildOrder = -Infinity;
-    var rightMostHasRParner = false;
+    var rightMostHasRPartner = false;
     for (var i = 0; i < children.length; i++) {
       var childId = children[i];
       var order   = this.DG.order.vOrder[childId];
@@ -2101,12 +2101,12 @@ Heuristics.prototype = {
       if (order < leftMostChildOrder) {
         leftMostChildId    = childId;
         leftMostChildOrder = order;
-        leftMostHasLParner = this.hasParnerBetweenOrders(childId, 0, order-1);  // has partner to the left
+        leftMostHasLPartner = this.hasPartnerBetweenOrders(childId, 0, order-1);  // has partner to the left
       }
       if (order > rightMostChildOrder) {
         rightMostChildId    = childId;
         rightMostChildOrder = order;
-        rightMostHasRParner = this.hasParnerBetweenOrders(childId, order+1, Infinity);  // has partner to the right
+        rightMostHasRPartner = this.hasPartnerBetweenOrders(childId, order+1, Infinity);  // has partner to the right
       }
       if (this.DG.GG.getOutEdges(childId).length > 0) {
         havePartners[childId] = true;
@@ -2119,10 +2119,10 @@ Heuristics.prototype = {
 
     var orderedChildren = this.DG.order.sortByOrder(children);
 
-    return {'leftMostHasLParner' : leftMostHasLParner,
+    return {'leftMostHasLPartner' : leftMostHasLPartner,
       'leftMostChildId'    : leftMostChildId,
       'leftMostChildOrder' : leftMostChildOrder,
-      'rightMostHasRParner': rightMostHasRParner,
+      'rightMostHasRPartner': rightMostHasRPartner,
       'rightMostChildId'   : rightMostChildId,
       'rightMostChildOrder': rightMostChildOrder,
       'withPartnerSet'     : havePartners,
@@ -2131,7 +2131,7 @@ Heuristics.prototype = {
       'orderedChildren'    : orderedChildren };
   },
 
-  hasParnerBetweenOrders: function( personId, minOrder, maxOrder ) {
+  hasPartnerBetweenOrders: function( personId, minOrder, maxOrder ) {
     var rank  = this.DG.ranks[personId];
     var order = this.DG.order.vOrder[personId];
 
@@ -2328,7 +2328,7 @@ Heuristics.prototype = {
     //    check if we can move it right or left easily:
     //    move to the right iff: rightmostchild has no partners && rightParent has no partners
     //    move to the left iff: leftmostchild has no partners && leftParent has no partners
-    if (numRightPartners == 1 && !partnerSiblingInfo.rightMostHasRParner) {
+    if (numRightPartners == 1 && !partnerSiblingInfo.rightMostHasRPartner) {
       for (var c = partnerSiblingInfo.orderedChildren.length - 1; c >= 0; c--) {
         var sibling = partnerSiblingInfo.orderedChildren[c];
         if (sibling == partnerId) {
@@ -2343,7 +2343,7 @@ Heuristics.prototype = {
         } // does not work on this side
       }
     }
-    if (numLeftPartners == 1 && !partnerSiblingInfo.leftMostHasLParner) {
+    if (numLeftPartners == 1 && !partnerSiblingInfo.leftMostHasLPartner) {
       for (var c = 0; c < partnerSiblingInfo.orderedChildren.length; c++) {
         var sibling = partnerSiblingInfo.orderedChildren[c];
         if (sibling == partnerId) {
