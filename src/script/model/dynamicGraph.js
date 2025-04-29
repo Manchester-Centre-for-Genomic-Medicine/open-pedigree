@@ -2081,7 +2081,7 @@ Heuristics.prototype = {
 
     var children = this.DG.GG.getOutEdges(childhubId);
 
-    if (children.length == 0) {
+    if (!children || children.length == 0) {
       return;
     }
 
