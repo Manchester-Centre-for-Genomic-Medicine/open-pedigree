@@ -2082,7 +2082,18 @@ Heuristics.prototype = {
     var children = this.DG.GG.getOutEdges(childhubId);
 
     if (!children || children.length == 0) {
-      return;
+      return {
+        'leftMostHasLPartner': false,
+        'leftMostChildId': undefined,
+        'leftMostChildOrder': Infinity,
+        'rightMostHasRPartner': false,
+        'rightMostChildId': undefined,
+        'rightMostChildOrder': -Infinity,
+        'withPartnerSet': {},
+        'numWithPartners': 0,
+        'numWithTwoPartners': 0,
+        'orderedChildren': []
+      };
     }
 
     var havePartners        = {};
