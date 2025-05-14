@@ -89,16 +89,16 @@ document.observe('dom:loaded', async function () {
   const keycloak = new Keycloak({
     url: keycloak_url,
     realm: keycloak_realm,
-    clientId: keycloak_client_id,
+    clientId: keycloak_client_id
   });
 
   try {
     const authenticated = await keycloak.init({
-      checkLoginIframe: false,
+      checkLoginIframe: false
     });
     if (!authenticated) {
       keycloak.login({
-        redirect_uri: window.location.href,
+        redirect_uri: window.location.href
       });
     } else {
       setInterval(keycloak.updateToken, 1000 * 30);
