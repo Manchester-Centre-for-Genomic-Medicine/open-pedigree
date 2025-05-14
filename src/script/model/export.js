@@ -564,7 +564,7 @@ PedigreeExport.createNewIDs = function(pedigree, idGenerationPreference, maxLeng
     if (!pedigree.GG.isPerson(i)) {
       continue;
     }
-    console.log(pedigree.GG.properties[i]);
+    // Removed unnecessary console.log statement.
 
     var id = nextUnusedID++;
     if (idGenerationPreference == 'external' && pedigree.GG.properties[i].hasOwnProperty('externalID')) {
