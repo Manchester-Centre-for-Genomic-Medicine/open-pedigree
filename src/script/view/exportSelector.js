@@ -174,7 +174,6 @@ var ExportSelector = Class.create( {
     } else {
       var privacySetting = $$('input:checked[type=radio][name="privacy-options"]')[0].value;
       if (exportType == 'canrisk') {
-        var idGenerationSetting = $$('input:checked[type=radio][name="ped-options"]')[0].value;
         var exportString = PedigreeExport.exportAsCanrisk(editor.getGraph().DG, 'newid');
         var fileName = 'canrisk.tsv';
         var mimeType = 'text/plain';
