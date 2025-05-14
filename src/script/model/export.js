@@ -112,6 +112,7 @@ function getTwinGroup(individual) {
       return 0;
     }
 
+    // CanRisk uses 1-indexing up to 9, then 'A' to represent 10
     if (individual['twinGroup'] <= 8) {
       return individual['twinGroup'] + 1;
     } else if (individual['twinGroup'] === 9) {

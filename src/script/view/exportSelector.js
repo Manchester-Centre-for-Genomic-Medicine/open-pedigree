@@ -137,6 +137,7 @@ var ExportSelector = Class.create( {
       pedOptionsTable.show();
       privacyOptionsTable.hide();
     } else if (exportType == 'canrisk') {
+      // remove options to force compliance with CanRisk 3.0 requirements
       pedOptionsTable.hide();
       privacyOptionsTable.hide();
     } else {
