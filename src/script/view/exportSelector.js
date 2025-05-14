@@ -26,6 +26,7 @@ var ExportSelector = Class.create( {
     };
     var typeListElement = new Element('table');
     typeListElement.insert(_addTypeOption(true,  'PED', 'ped'));
+    typeListElement.insert(_addTypeOption(false,  'CanRisk 3.0', 'canrisk'));
     typeListElement.insert(_addTypeOption(false,  'GA4GH FHIR', 'GA4GH'));
     typeListElement.insert(_addTypeOption(false,  'SVG', 'svg'));
     typeListElement.insert(_addTypeOption(false,  'PDF', 'pdf'));
@@ -135,6 +136,10 @@ var ExportSelector = Class.create( {
     if (exportType == 'ped') {
       pedOptionsTable.show();
       privacyOptionsTable.hide();
+    } else if (exportType == 'canrisk') {
+      // remove options to force compliance with CanRisk 3.0 requirements
+      pedOptionsTable.hide();
+      privacyOptionsTable.hide();
     } else {
       pedOptionsTable.hide();
       privacyOptionsTable.show();
@@ -168,7 +173,14 @@ var ExportSelector = Class.create( {
       saveTextAs(exportString, fileName);
     } else {
       var privacySetting = $$('input:checked[type=radio][name="privacy-options"]')[0].value;
-      if (exportType == 'GA4GH') {
+      if (exportType == 'canrisk') {
+        var exportString = PedigreeExport.exportAsCanrisk(editor.getGraph().DG, 'newid');
+        var fileName = 'canrisk.tsv';
+        var mimeType = 'text/plain';
+        // Uses FileSaver global
+        /* eslint-disable no-undef */
+        saveTextAs(exportString, fileName);
+      } else if (exportType == 'GA4GH') {
         var exportString = PedigreeExport.exportAsGA4GH(editor.getGraph().DG, privacySetting);
         var fileName = 'open-pedigree-GA4GH-fhir.json';
         var mimeType = 'application/fhir+json';
