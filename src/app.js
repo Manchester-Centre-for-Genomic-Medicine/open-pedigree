@@ -31,10 +31,13 @@ var HPO_TERMS = [];
 // make sure auth0 is available throughout the application
 var auth0 = null;
 
-// Expected to be LIVE, TEST, or DEVELOP. Anything else is considered DEVELOP
-function deduceEnvironment() {
-  const host = window.location.host;
-
+/**
+ * Deduces the environment based on the current URL's subdomain.
+ * 
+ * @param {string} host - The host part of the URL.
+ * @returns {string} The environment based on the subdomain of the current URL.
+ */
+function deduceEnvironment(host) {
   if (host === 'openpedigree.northwestglh.com') {
     return 'LIVE';
   }
@@ -47,7 +50,8 @@ function deduceEnvironment() {
   return 'LOCAL'; // Default to 'LOCAL' for all other cases
 }
 
-const ENVIRONMENT = deduceEnvironment();
+// Expected to be LIVE, PREPROD, TEST, DEVELOP, or LOCAL.
+const ENVIRONMENT = deduceEnvironment(window.location.host);
 
 if (ENVIRONMENT === 'LIVE') {
   var keycloak_url = 'https://mft-uks-keycloak.uksouth.cloudapp.azure.com/';
