@@ -60,7 +60,7 @@ var ExportSelector = Class.create( {
     var privLabel = new Element('label', {'class': 'export-config-header'}).insert('Privacy export options:');
     configListElementPrivacy.insert(privLabel.wrap('td').wrap('tr'));
     configListElementPrivacy.insert(_addConfigOption(true,  'privacy-options', 'export-subconfig-label', 'All data', 'all'));
-    configListElementPrivacy.insert(_addConfigOption(false, 'privacy-options', 'export-subconfig-label', 'Remove personal information (name and age)', 'nopersonal'));
+    configListElementPrivacy.insert(_addConfigOption(false, 'privacy-options', 'export-subconfig-label', 'Remove personal information (name, identifier, and age)', 'nopersonal'));
     configListElementPrivacy.insert(_addConfigOption(false, 'privacy-options', 'export-subconfig-label', 'Remove personal information and free-form comments', 'minimal'));
 
     var _addSelectOption = function (name, cssClass, labelText, options) {

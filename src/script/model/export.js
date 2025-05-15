@@ -326,10 +326,28 @@ PedigreeExport.exportAsSVG = function(pedigree, privacySetting = 'all') {
       childNode.parentNode.removeChild(childNode);
     }
   }
+  function moveText(dom, fontSize, distance) {
+    let toMove = [];
+    for (let textNode of dom.getElementsByTagName('text')){
+      if (textNode.style.fontSize === fontSize){
+        toMove.push(textNode);
+      }
+    }
+    for (let childNode of toMove){
+      let x = parseFloat(childNode.getAttribute('x'));
+      let y = parseFloat(childNode.getAttribute('y'));
+      childNode.setAttribute('x', x + (distance.x ?? 0));
+      childNode.setAttribute('y', y + (distance.y ?? 0));
+    }
+  }
+
+
 
   removeHiddenNodes(dom.getRootNode());
   if (privacySetting !== 'all' ){
     removeText(dom, '20px');
+    removeText(dom, '18px');
+    moveText(dom, '16px', {x: 0, y: -70}); 
   }
   if (privacySetting === 'minimal'){
     removeText(dom, '19px');
