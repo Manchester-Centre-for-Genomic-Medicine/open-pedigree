@@ -326,10 +326,37 @@ PedigreeExport.exportAsSVG = function(pedigree, privacySetting = 'all') {
       childNode.parentNode.removeChild(childNode);
     }
   }
+  /**
+   * Moves all <text> nodes in the given DOM that match the specified font size by a given distance.
+   * 
+   * @param {Document} dom - The DOM object containing the <text> nodes to be moved.
+   * @param {string} fontSize - The font size of the <text> nodes to be moved.
+   * @param {Object} distance - The distance to move the nodes, with `x` and `y` properties.
+   * @param {number} [distance.x=0] - The horizontal distance to move the nodes.
+   * @param {number} [distance.y=0] - The vertical distance to move the nodes.
+   */
+  function moveTextNodes(dom, fontSize, distance) {
+    let toMove = [];
+    for (let textNode of dom.getElementsByTagName('text')){
+      if (textNode.style.fontSize === fontSize){
+        toMove.push(textNode);
+      }
+    }
+    for (let childNode of toMove){
+      let x = parseFloat(childNode.getAttribute('x'));
+      let y = parseFloat(childNode.getAttribute('y'));
+      childNode.setAttribute('x', x + (distance.x ?? 0));
+      childNode.setAttribute('y', y + (distance.y ?? 0));
+    }
+  }
+
+
 
   removeHiddenNodes(dom.getRootNode());
   if (privacySetting !== 'all' ){
     removeText(dom, '20px');
+    removeText(dom, '18px');
+    moveText(dom, '16px', {x: 0, y: -70}); 
   }
   if (privacySetting === 'minimal'){
     removeText(dom, '19px');
