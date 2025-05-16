@@ -21,15 +21,10 @@ import * as Queries from './app.queries.js';
 
 // Global variable, obtained from URL parameters when opened from Gen-O.
 var specialtyID = null;
-// IMPORTANT! Don't forget to change to false before commiting to github!
-var DEV_MODE = false;
 
 var HGNC_GENES = [];
 var GEN_O_DISORDERS = [];
 var HPO_TERMS = [];
-
-// make sure auth0 is available throughout the application
-var auth0 = null;
 
 /**
  * Deduces the environment based on the current URL's subdomain.
@@ -218,7 +213,8 @@ document.observe('dom:loaded', async function () {
         returnUrl: 'javascript:history.go(-2)',
         autosave: true,
         backend: {
-          load: async ({ onSuccess, onError }) => {
+          load: async ({ onSuccess, onFailure }) => {
+            console.log('load function triggered');
             if (urlParams.has('specialty_id')) {
               specialtyID = urlParams.get('specialty_id');
             } else {
@@ -233,8 +229,12 @@ document.observe('dom:loaded', async function () {
                 variables
               });
 
+              if (!result?.data?.pedigree[0]?.rawData?.jsonData) {
+                return onFailure();
+              }
+
               return onSuccess(
-                result?.data?.pedigree[0]?.rawData?.jsonData ?? null
+                result.data.pedigree[0].rawData.jsonData
               );
             } else {
               console.warn('No phenopacket ID has been specified. No data will be saved.')

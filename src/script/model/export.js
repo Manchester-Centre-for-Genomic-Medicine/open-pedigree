@@ -335,7 +335,7 @@ PedigreeExport.exportAsSVG = function(pedigree, privacySetting = 'all') {
    * @param {number} [distance.x=0] - The horizontal distance to move the nodes.
    * @param {number} [distance.y=0] - The vertical distance to move the nodes.
    */
-  function moveTextNodes(dom, fontSize, distance) {
+  function moveText(dom, fontSize, distance) {
     let toMove = [];
     for (let textNode of dom.getElementsByTagName('text')){
       if (textNode.style.fontSize === fontSize){
@@ -349,8 +349,6 @@ PedigreeExport.exportAsSVG = function(pedigree, privacySetting = 'all') {
       childNode.setAttribute('y', y + (distance.y ?? 0));
     }
   }
-
-
 
   removeHiddenNodes(dom.getRootNode());
   if (privacySetting !== 'all' ){
