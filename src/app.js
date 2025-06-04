@@ -21,50 +21,73 @@ import * as Queries from './app.queries.js';
 
 // Global variable, obtained from URL parameters when opened from Gen-O.
 var specialtyID = null;
-// IMPORTANT! Don't forget to change to false before commiting to github!
-var DEV_MODE = false;
 
 var HGNC_GENES = [];
 var GEN_O_DISORDERS = [];
 var HPO_TERMS = [];
 
-// make sure auth0 is available throughout the application
-var auth0 = null;
+/**
+ * Deduces the environment based on the current URL's subdomain.
+ * 
+ * @param {string} host - The host part of the URL.
+ * @returns {string} The environment based on the subdomain of the current URL.
+ */
+function deduceEnvironment(host) {
+  if (host === 'openpedigree.northwestglh.com') {
+    return 'LIVE';
+  }
 
-// Expected to be LIVE, PREPROD, TEST, DEVELOP, or LOCAL. Anything else is considered LOCAL
-const ENVIRONMENT = 'LIVE';
+  const subdomainMatch = host.match(/^([a-zA-Z0-9-]+)-openpedigree\.northwestglh\.com$/);
+  if (subdomainMatch) {
+    return subdomainMatch[1].toUpperCase(); // Return the subdomain as the environment (e.g., 'TEST', 'PREPROD')
+  }
 
-if (ENVIRONMENT === 'LIVE') {
-  var keycloak_url = 'https://mft-uks-keycloak.uksouth.cloudapp.azure.com/';
-  var keycloak_realm = 'gen-o';
-  var keycloak_client_id = 'gen-o';
-  var gen_o_graphql = "https://graphql.northwestglh.com/v1/graphql";
-  var gen_o_application_uri = "https://gen-o.northwestglh.com";
-} else if (ENVIRONMENT === 'PREPROD') {
-  var keycloak_url = 'https://mft-uks-keycloak.uksouth.cloudapp.azure.com/';
-  var keycloak_realm = 'gen-o';
-  var keycloak_client_id = 'gen-o';
-  var gen_o_graphql = "https://preprod-graphql.northwestglh.com/v1/graphql";
-  var gen_o_application_uri = "https://preprod-gen-o.northwestglh.com";
-} else if (ENVIRONMENT === 'TEST') {
-  var keycloak_url = 'https://mft-uks-keycloak.uksouth.cloudapp.azure.com/';
-  var keycloak_realm = 'gen-o';
-  var keycloak_client_id = 'gen-o';
-  var gen_o_graphql = "https://test-graphql.northwestglh.com/v1/graphql";
-  var gen_o_application_uri = "https://test-gen-o.northwestglh.com";
-} else if (ENVIRONMENT === 'DEVELOP') {
-  var keycloak_url = 'https://mft-uks-keycloak.uksouth.cloudapp.azure.com/';
-  var keycloak_realm = 'gen-o';
-  var keycloak_client_id = 'gen-o';
-  var gen_o_graphql = "https://develop-graphql.northwestglh.com/v1/graphql";
-  var gen_o_application_uri = "https://develop-gen-o.northwestglh.com";
-} else {
-  var keycloak_url = 'https://mft-uks-keycloak.uksouth.cloudapp.azure.com/';
-  var keycloak_realm = 'gen-o';
-  var keycloak_client_id = 'gen-o';
-  var gen_o_graphql = "http://localhost:4100/v1/graphql";
-  var gen_o_application_uri = "http://localhost:3000";
+  return 'LOCAL'; // Default to 'LOCAL' for all other cases
 }
+
+// Expected to be LIVE, PREPROD, TEST, DEVELOP, or LOCAL.
+const ENVIRONMENT = deduceEnvironment(window.location.host);
+
+const environments = {
+  LIVE: {
+    keycloak_url: 'https://mft-uks-keycloak.uksouth.cloudapp.azure.com/',
+    keycloak_realm: 'gen-o',
+    keycloak_client_id: 'gen-o',
+    gen_o_graphql: 'https://graphql.northwestglh.com/v1/graphql',
+    gen_o_application_uri: 'https://gen-o.northwestglh.com',
+  },
+  PREPROD: {
+    keycloak_url: 'https://mft-uks-keycloak.uksouth.cloudapp.azure.com/',
+    keycloak_realm: 'gen-o',
+    keycloak_client_id: 'gen-o',
+    gen_o_graphql: 'https://preprod-graphql.northwestglh.com/v1/graphql',
+    gen_o_application_uri: 'https://preprod-gen-o.northwestglh.com',
+  },
+  TEST: {
+    keycloak_url: 'https://mft-uks-keycloak.uksouth.cloudapp.azure.com/',
+    keycloak_realm: 'gen-o-dev',
+    keycloak_client_id: 'gen-o',
+    gen_o_graphql: 'https://test-graphql.northwestglh.com/v1/graphql',
+    gen_o_application_uri: 'https://test-gen-o.northwestglh.com',
+  },
+  DEVELOP: {
+    keycloak_url: 'https://mft-uks-keycloak.uksouth.cloudapp.azure.com/',
+    keycloak_realm: 'gen-o-dev',
+    keycloak_client_id: 'gen-o',
+    gen_o_graphql: 'https://develop-graphql.northwestglh.com/v1/graphql',
+    gen_o_application_uri: 'https://develop-gen-o.northwestglh.com',
+  },
+  LOCAL: {
+    keycloak_url: 'http://localhost:7080/',
+    keycloak_realm: 'gen-o',
+    keycloak_client_id: 'gen-o',
+    gen_o_graphql: 'http://localhost:4100/v1/graphql',
+    gen_o_application_uri: 'http://localhost:3000',
+  },
+};
+
+const { keycloak_url, keycloak_realm, keycloak_client_id, gen_o_graphql, gen_o_application_uri } =
+  environments[ENVIRONMENT] || environments.LOCAL;
 
 document.observe('dom:loaded', async function () {
   const keycloak = new Keycloak({
@@ -190,7 +213,8 @@ document.observe('dom:loaded', async function () {
         returnUrl: 'javascript:history.go(-2)',
         autosave: true,
         backend: {
-          load: async ({ onSuccess, onError }) => {
+          load: async ({ onSuccess, onFailure }) => {
+            console.log('load function triggered');
             if (urlParams.has('specialty_id')) {
               specialtyID = urlParams.get('specialty_id');
             } else {
@@ -205,8 +229,12 @@ document.observe('dom:loaded', async function () {
                 variables
               });
 
+              if (!result?.data?.pedigree[0]?.rawData?.jsonData) {
+                return onFailure();
+              }
+
               return onSuccess(
-                result?.data?.pedigree[0]?.rawData?.jsonData ?? null
+                result.data.pedigree[0].rawData.jsonData
               );
             } else {
               console.warn('No phenopacket ID has been specified. No data will be saved.')
