@@ -1,0 +1,133 @@
+name: Docker Build and Test
+
+on:
+  push:
+    branches: [ master, main ]
+  pull_request:
+    branches: [ master, main ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'yarn'
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Build application
+        run: yarn build
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: false
+          tags: open-pedigree:test
+          load: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Start Docker container
+        run: |
+          docker run -d --name open-pedigree-test -p 9000:9000 open-pedigree:test
+          # Wait for the container to start
+          sleep 10
+
+      - name: Check container health
+        run: |
+          # Check if container is running
+          if ! docker ps | grep -q open-pedigree-test; then
+            echo "Container is not running"
+            docker logs open-pedigree-test
+            exit 1
+          fi
+          
+          # Check if the application responds
+          max_attempts=30
+          attempt=1
+          
+          while [ $attempt -le $max_attempts ]; do
+            echo "Attempt $attempt of $max_attempts..."
+            
+            if curl -f -s --max-time 10 http://localhost:9000 > /dev/null; then
+              echo "Application is responding successfully!"
+              break
+            fi
+            
+            if [ $attempt -eq $max_attempts ]; then
+              echo "Application failed to respond after $max_attempts attempts"
+              echo "Container logs:"
+              docker logs open-pedigree-test
+              echo "Nginx error logs:"
+              docker exec open-pedigree-test cat /var/log/nginx/error.log || echo "No error log found"
+              exit 1
+            fi
+            
+            sleep 2
+            attempt=$((attempt + 1))
+          done
+
+      - name: Test application content
+        run: |
+          # Test that the main page loads and contains expected content
+          response=$(curl -s http://localhost:9000)
+          
+          # Check for basic HTML structure
+          if ! echo "$response" | grep -q "<html"; then
+            echo "Response does not contain valid HTML"
+            echo "Response content:"
+            echo "$response"
+            exit 1
+          fi
+          
+          # Check for the application title or specific content
+          if ! echo "$response" | grep -qi "pedigree"; then
+            echo "Response does not contain expected 'pedigree' content"
+            echo "Response content:"
+            echo "$response"
+            exit 1
+          fi
+          
+          echo "Application content validation passed!"
+
+      - name: Test static assets
+        run: |
+          # Test that CSS and JS assets are accessible
+          status_code=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:9000/dist/)
+          if [ "$status_code" -ne 200 ] && [ "$status_code" -ne 403 ]; then
+            echo "Dist directory not accessible, status code: $status_code"
+            exit 1
+          fi
+          
+          # Test that public assets are accessible
+          status_code=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:9000/public/)
+          if [ "$status_code" -ne 200 ] && [ "$status_code" -ne 403 ]; then
+            echo "Public directory not accessible, status code: $status_code"
+            exit 1
+          fi
+          
+          echo "Static assets validation passed!"
+
+      - name: Cleanup
+        if: always()
+        run: |
+          docker stop open-pedigree-test || true
+          docker rm open-pedigree-test || true
+
+      - name: Show build artifacts info
+        run: |
+          echo "Docker image built successfully:"
+          docker images | grep open-pedigree || echo "No open-pedigree images found"
