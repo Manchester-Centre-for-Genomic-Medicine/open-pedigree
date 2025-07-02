@@ -387,7 +387,7 @@ document.observe('dom:loaded', async function () {
               clearNodeDemographics(node, false);
               var names = result.data.individual.name;
               names.sort(sortPatientName)
-              node.setFirstName(Array.isArray(names[0]?.given) ? names[0]?.given.join(' ') : '');
+              node.setFirstName(node.setFirstName(names[0]?.given?.join(' ') ?? ''));
               node.setLastName(names[0]?.family);
               node.setLifeStatus(
                 result.data.individual?.deceased
