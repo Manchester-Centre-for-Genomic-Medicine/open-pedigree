@@ -2,9 +2,9 @@ name: Docker Build and Test
 
 on:
   push:
-    branches: [ master, main ]
+    branches: [ master, mcgm-version-develop ]
   pull_request:
-    branches: [ master, main ]
+    branches: [ master, mcgm-version-develop ]
 
 jobs:
   build-and-test:
