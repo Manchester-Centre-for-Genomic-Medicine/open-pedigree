@@ -229,12 +229,12 @@ document.observe('dom:loaded', async function () {
                 variables
               });
 
-              if (!result?.data?.pedigree[0]?.rawData?.jsonData) {
+              if (!result?.data?.family[0]?.rawData?.jsonData) {
                 return onFailure();
               }
 
               return onSuccess(
-                result.data.pedigree[0].rawData.jsonData
+                result.data.family[0].rawData.jsonData
               );
             } else {
               console.warn('No phenopacket ID has been specified. No data will be saved.')
