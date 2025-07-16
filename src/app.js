@@ -349,7 +349,9 @@ document.observe('dom:loaded', async function () {
             node.setGender(result.data?.individual[0]?.sex);
             var hpos = [];
             result.data?.individual[0]?.phenopacket?.phenotypic_features?.each(function(v) {
-              hpos.push(new HPOTerm(v.hpo.id, v.hpo.name));
+              if (v.hpo?.id && v.hpo?.name) {
+                hpos.push(new HPOTerm(v.hpo.id, v.hpo.name));
+              }
             });
             node.setHPO(hpos);
             var variants = [];
@@ -432,9 +434,11 @@ document.observe('dom:loaded', async function () {
         var linkedHpoIds = [];
         hpos.each( function (hpo) {
           var hpoID = HPOTerm.desanitizeID(hpo.getID());
-          hpoTerms.push({ id: hpoID, name: hpo.getName() });
-          linkedHpoTerms.push({ phenopacket_id: phenopacketId, hpo_id: hpoID, presence: "PRESENT" });
-          linkedHpoIds.push(hpoID);
+          if (hpoID) {
+            hpoTerms.push({ id: hpoID, name: hpo.getName() });
+            linkedHpoTerms.push({ phenopacket_id: phenopacketId, hpo_id: hpoID, presence: "PRESENT" });
+            linkedHpoIds.push(hpoID);
+          }
         });
         
         const variables = {
@@ -640,7 +644,12 @@ document.observe('pedigree:person:set:disorders', function(event) {
   var disorders = event.memo.value
   for(var i = 0; i < disorders.length; i++) {
     var disorder = disorders[i]
-    console.log(`${i}) ID: ${disorder.getDesanitizedDisorderID()}, Name: ${disorder.getName()}`);
+    var disorderID = disorder.getDesanitizedDisorderID();
+    if (disorderID) {
+      console.log(`${i}) ID: ${disorderID}, Name: ${disorder.getName()}`);
+    } else {
+      console.log(`${i}) ID: null, Name: ${disorder.getName()}`);
+    }
   }
 });
 
@@ -652,7 +661,12 @@ document.observe('pedigree:person:set:hpo', function(event) {
   var hpos = event.memo.value;
   for(var i = 0; i < hpos.length; i++) {
     var hpo = hpos[i];
-    console.log(`${i}) ID: ${HPOTerm.desanitizeID(hpo.getID())}, Name: ${hpo.getName()}`);
+    var hpoID = hpo.getID();
+    if (hpoID) {
+      console.log(`${i}) ID: ${HPOTerm.desanitizeID(hpoID)}, Name: ${hpo.getName()}`);
+    } else {
+      console.log(`${i}) ID: null, Name: ${hpo.getName()}`);
+    }
   }
 });
 
@@ -664,21 +678,28 @@ document.observe('pedigree:person:set:genes', function(event) {
   var genes = event.memo.value;
   for(var i = 0; i < genes.length; i++) {
     var gene = genes[i];
-    console.log(`${i}) ID: ${gene.getID()}, Name: ${gene.getSymbol()}`);
+    var geneID = gene.getID();
+    if (geneID) {
+      console.log(`${i}) ID: ${geneID}, Name: ${gene.getSymbol()}`);
+    } else {
+      console.log(`${i}) ID: null, Name: ${gene.getSymbol()}`);
+    }
   }
 });
 
 document.observe('custom:selectize:load:genes', async function(event) {
   // Function to populate selecitzeJS control with HGNC genes from Gen-O.
   HGNC_GENES.forEach(function(item) {
-    var gene = new Gene(item.hgnc_id, item.symbol, item.locus_group);
-    item = {
-      id: gene.getID(),
-      name: gene.getSymbol(),
-      value: gene.getDisplayName(),
-      group: gene.getGroup(),
+    if (item.hgnc_id && item.symbol) {
+      var gene = new Gene(item.hgnc_id, item.symbol, item.locus_group);
+      item = {
+        id: gene.getID(),
+        name: gene.getSymbol(),
+        value: gene.getDisplayName(),
+        group: gene.getGroup(),
+      }
+      event.memo.addOption(item);
     }
-    event.memo.addOption(item);
   });
   event.memo.refreshOptions();
 });
@@ -686,13 +707,15 @@ document.observe('custom:selectize:load:genes', async function(event) {
 document.observe('custom:selectize:load:disorders', async function(event) {
   // Function to populate selecitzeJS control with ORPHA and ICD-10 genes from Gen-O.
   GEN_O_DISORDERS.forEach(function(item) {
-    var disorder = new Disorder(item.ontology_id, item.name);
-    item = {
-      id: disorder.getDesanitizedDisorderID(),
-      name: disorder.getName(),
-      value: disorder.getDisplayName(),
+    if (item.ontology_id && item.name) {
+      var disorder = new Disorder(item.ontology_id, item.name);
+      item = {
+        id: disorder.getDesanitizedDisorderID(),
+        name: disorder.getName(),
+        value: disorder.getDisplayName(),
+      }
+      event.memo.addOption(item);
     }
-    event.memo.addOption(item);
   });
   event.memo.refreshOptions();
 });
@@ -700,13 +723,15 @@ document.observe('custom:selectize:load:disorders', async function(event) {
 document.observe('custom:selectize:load:hpos', async function(event) {
   // Function to populate selecitzeJS control with HPO terms from Gen-O.
   HPO_TERMS.forEach(function(item) {
-    var hpo = new HPOTerm(item.id, item.name);
-    item = {
-      id: hpo.getDesanitizedID(),
-      name: hpo.getName(),
-      value: hpo.getDisplayName(),
+    if (item.id && item.name) {
+      var hpo = new HPOTerm(item.id, item.name);
+      item = {
+        id: hpo.getDesanitizedID(),
+        name: hpo.getName(),
+        value: hpo.getDisplayName(),
+      }
+      event.memo.addOption(item);
     }
-    event.memo.addOption(item);
   });
   event.memo.refreshOptions();
 });
