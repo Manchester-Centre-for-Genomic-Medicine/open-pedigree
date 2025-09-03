@@ -7,17 +7,18 @@ import Raphael from 'pedigree/raphael';
  *
  * @class Workspace
  * @constructor
+ * @param {String} gNumber The G number to display in the top right corner
  */
 
 var Workspace = Class.create({
 
-  initialize: function() {
+  initialize: function(gNumber) {
     var me = this;
     this.canvas = new Element('div', {'id' : 'canvas'});
     this.workArea = new Element('div', {'id' : 'work-area'}).update(this.canvas);
     $('body').update(this.workArea);
     var screenDimensions = document.viewport.getDimensions();
-    this.generateTopMenu();
+    this.generateTopMenu(gNumber);
     this.width = screenDimensions.width;
     this.height = screenDimensions.height - this.canvas.cumulativeOffset().top - 4;
     this._paper = Raphael('canvas',this.width, this.height);
@@ -142,8 +143,9 @@ var Workspace = Class.create({
      * Creates the menu on the top
      *
      * @method generateTopMenu
+     * @param {String} gNumber The G number to insert
      */
-  generateTopMenu: function() {
+  generateTopMenu: function(gNumber) {
     var menu = new Element('div', {'id' : 'editor-menu'});
 
     menu.insert(new Element('a', {'class': 'title', 'href': 'https://github.com/phenotips/open-pedigree'})
@@ -217,10 +219,7 @@ var Workspace = Class.create({
     submenus.each(_createSubmenu);
 
     menu.insert(new Element('div', {'class': 'powered-by'})
-      .insert('Powered by ')
-      .insert(new Element('a', {'href': 'https://phenotips.com/'})
-        .update('PhenoTips')
-        .insert(new Element('sup').update('&reg;'))));
+      .insert(gNumber));
   },
 
   /**
