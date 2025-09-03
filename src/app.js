@@ -211,6 +211,7 @@ document.observe('dom:loaded', async function () {
 
       const editor = new PedigreeEditor({
         returnUrl: 'javascript:history.go(-2)',
+        gNumber: COHORT.family_identifier,
         autosave: true,
         backend: {
           load: async ({ onSuccess, onFailure }) => {

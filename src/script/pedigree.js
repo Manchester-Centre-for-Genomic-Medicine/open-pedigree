@@ -62,7 +62,7 @@ var PedigreeEditor = Class.create({
     this._graphModel = DynamicPositionedGraph.makeEmpty(PedigreeEditorParameters.attributes.layoutRelativePersonWidth, PedigreeEditorParameters.attributes.layoutRelativeOtherWidth);
 
     //initialize the elements of the app
-    this._workspace = new Workspace();
+    this._workspace = new Workspace(options.gNumber || '(unknown family)');
     this._nodeMenu = this.generateNodeMenu();
     this._nodeGroupMenu = this.generateNodeGroupMenu();
     this._partnershipMenu = this.generatePartnershipMenu();
