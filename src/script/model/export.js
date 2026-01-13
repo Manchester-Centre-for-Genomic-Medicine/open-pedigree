@@ -258,7 +258,14 @@ PedigreeExport.exportAsCanrisk = function(pedigree, idGenerationPreference) {
       ? dobData.getFullYear()
       : 0;
     
-    output += generateLine(individual);
+    const numPersons = parseInt(pedigree.GG.properties[i]['numPersons']) || 1;
+    for (let j = 0; j < numPersons; j++) {
+      let clonedIndividual = { ...individual };
+      if (numPersons > 1) {
+        clonedIndividual.id = individual.id + '_' + (j + 1);
+      }
+      output += generateLine(clonedIndividual);
+    }
   }
 
   return output;
