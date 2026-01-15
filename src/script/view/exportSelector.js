@@ -158,7 +158,7 @@ var ExportSelector = Class.create( {
      * @param pictureBox
      * @private
      */
-  _onExportStarted: function() {
+  _onExportStarted: async function() {
     this.hide();
 
     var exportType = $$('input:checked[type=radio][name="export-type"]')[0].value;
@@ -174,7 +174,7 @@ var ExportSelector = Class.create( {
     } else {
       var privacySetting = $$('input:checked[type=radio][name="privacy-options"]')[0].value;
       if (exportType == 'canrisk') {
-        var exportString = PedigreeExport.exportAsCanrisk(editor.getGraph().DG, 'newid');
+        var exportString = await PedigreeExport.exportAsCanrisk(editor.getGraph().DG, 'newid');
         var fileName = 'canrisk.tsv';
         var mimeType = 'text/plain';
         // Uses FileSaver global
