@@ -6,7 +6,7 @@ module.exports = {
   entry: './src/app.js',
 
   output: {
-    filename: 'pedigree.min.js',
+    filename: '[name].min.js',
     path: path.resolve(__dirname, 'dist'),
   },
 
@@ -17,6 +17,8 @@ module.exports = {
     '$$',
     '$',
     '$F',
+    'jQuery',  // jQuery library
+    'Raphael', // Raphael library
   ],
 
   module: {
@@ -74,6 +76,29 @@ module.exports = {
         },
       }),
     ],
+    splitChunks: {
+      chunks: 'all',
+      cacheGroups: {
+        vendor: {
+          test: /[\\/]node_modules[\\/]/,
+          name: 'vendors',
+          chunks: 'all',
+          priority: 10,
+        },
+        publicVendor: {
+          test: /[\\/]public[\\/]vendor[\\/]/,
+          name: 'public-vendors',
+          chunks: 'all',
+          priority: 5,
+        },
+      },
+    },
+  },
+
+  performance: {
+    hints: 'warning',
+    maxAssetSize: 500 * 1024,
+    maxEntrypointSize: 500 * 1024,
   },
 
   resolve: {
