@@ -23,7 +23,7 @@ var Disorder = Class.create( {
     //this._name       = name ? name : 'loading...';
 
     // Load disorder id and name from display name.
-    if (disorderID == null && name.includes(' | ')) {
+    if (disorderID == null && name && name.includes(' | ')) {
       var disorderInfo = name.split(' | ');
       this._source = source;
       this._disorderID = Disorder.sanitizeID(disorderInfo[0]);
@@ -125,9 +125,13 @@ var Disorder = Class.create( {
  * For that purpose these symbols in IDs are converted in memory (but not in the stored pedigree) to some underscores.
  */
 Disorder.sanitizeID = function(disorderID) {
+  if (disorderID == null) {
+    return '';
+  }
   if (isInt(disorderID)) {
     return disorderID;
   }
+  disorderID = disorderID.toString();
   var temp = disorderID.replace(/[\(\[]/g, '_L_');
   temp = temp.replace(/[\)\]]/g, '_J_');
   temp = temp.replace(/[:]/g, '_C_');
@@ -137,6 +141,10 @@ Disorder.sanitizeID = function(disorderID) {
 };
 
 Disorder.desanitizeID = function(disorderID) {
+  if (disorderID == null) {
+    return '';
+  }
+  disorderID = disorderID.toString();
   var temp = disorderID.replace(/__/g, ' ');
   temp = temp.replace(/_C_/g, ':');
   temp = temp.replace(/_M_/g, '-');
