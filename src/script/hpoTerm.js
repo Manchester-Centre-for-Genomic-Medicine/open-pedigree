@@ -10,12 +10,12 @@ var HPOTerm = Class.create( {
 
   initialize: function(hpoID, name, callWhenReady) {
     // user-defined terms
-    if (name == null && !HPOTerm.isValidID(HPOTerm.desanitizeID(hpoID))) {
+    if (name == null && hpoID != null && !HPOTerm.isValidID(HPOTerm.desanitizeID(hpoID))) {
       name = HPOTerm.desanitizeID(hpoID);
     }
 
     // Load hpo id and name from display name.
-    if (hpoID == null && name.includes(' | ')) {
+    if (hpoID == null && name && name.includes(' | ')) {
       var hpoInfo = name.split(' | ');
       this._hpoID = HPOTerm.sanitizeID(hpoInfo[0]);
       this._name  = hpoInfo[1];
@@ -116,6 +116,10 @@ var HPOTerm = Class.create( {
  * For that purpose these symbols in IDs are converted in memory (but not in the stored pedigree) to some underscores.
  */
 HPOTerm.sanitizeID = function(id) {
+  if (id == null) {
+    return '';
+  }
+  id = id.toString();
   var temp = id.replace(/[\(\[]/g, '_L_');
   temp = temp.replace(/[\)\]]/g, '_J_');
   temp = temp.replace(/[:]/g, '_C_');
@@ -123,6 +127,10 @@ HPOTerm.sanitizeID = function(id) {
 };
 
 HPOTerm.desanitizeID = function(id) {
+  if (id == null) {
+    return '';
+  }
+  id = id.toString();
   var temp = id.replace(/__/g, ' ');
   temp = temp.replace(/_C_/g, ':');
   temp = temp.replace(/_L_/g, '(');
